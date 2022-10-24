@@ -1,39 +1,11 @@
 package words
 
 import (
+	"github.com/chainreactors/words/mask/parser"
 	"math/rand"
 	"time"
 	"unsafe"
 )
-
-var (
-	Lowercase    = "abcdefghijklmnopqrstuvwxyz"
-	Uppercase    = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
-	Letter       = Lowercase + Uppercase
-	Digit        = "0123456789"
-	LowercaseHex = Digit + "abcdef"
-	UppercaseHex = Digit + "ABCDEF"
-	Hex          = Digit + "abcdefABCDEF"
-	Punctuation  = "!\"#$%&'()*+,-./:;<=>?@[\\]^_`{|}~"
-	Printable    = Letter + Digit + Punctuation
-	Whitespace   = "\t\n\r\x0b\x0c"
-	Custom       = ""
-)
-
-var MetawordMap = map[string]string{
-	"a": Lowercase,
-	"A": Uppercase,
-	"w": Letter,
-	"d": Digit,
-	"h": LowercaseHex,
-	"H": UppercaseHex,
-	"x": Hex,
-
-	"p": Punctuation,
-	"P": Printable,
-	"s": Whitespace,
-	"c": Custom,
-}
 
 type Words struct {
 	raw string
@@ -59,8 +31,8 @@ func RandPath() string {
 		if remain == 0 {
 			cache, remain = src.Int63(), letterIdMax
 		}
-		if idx := int(cache & letterIdMask); idx < len(Letter) {
-			b[i] = Letter[idx]
+		if idx := int(cache & letterIdMask); idx < len(parser.Letter) {
+			b[i] = parser.Letter[idx]
 			i--
 		}
 		cache >>= letterIdBits
