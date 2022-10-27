@@ -96,8 +96,10 @@ type Parser struct {
 	errors     []string //error messages
 	errorLines []string //for using with wasm communication.
 
-	curToken  Token
-	peekToken Token
+	curToken   Token
+	peekToken  Token
+	tokenCache []Token
+	curCache   int
 
 	prefixParseFns map[TokenType]prefixParseFn
 	infixParseFns  map[TokenType]infixParseFn

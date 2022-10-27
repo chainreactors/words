@@ -7,7 +7,7 @@ import (
 )
 
 func TestLexer(t *testing.T) {
-	input := "test{?lu#3}"
+	input := "{{{{?111#3}.oocl.com中文测试11{}{{{{??}?"
 	fmt.Printf("Input = %s\n", input)
 
 	l := NewLexer(input)
@@ -87,7 +87,7 @@ func TestEval(t *testing.T) {
 }
 
 func TestRun(t *testing.T) {
-	words, err := Run("{?l#2}")
+	words, err := Run("{?l#2}.oocl.com")
 	println(words, err)
 }
 func TestGenerator(t *testing.T) {
