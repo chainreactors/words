@@ -86,6 +86,10 @@ func TestEval(t *testing.T) {
 	}
 }
 
+func TestRun(t *testing.T) {
+	words, err := Run("{?l#2}")
+	println(words, err)
+}
 func TestGenerator(t *testing.T) {
 	gen := NewGenerator([]string{"a", "b", "c", "d"}, 3)
 	println(gen.Strings)

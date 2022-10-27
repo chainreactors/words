@@ -12,7 +12,7 @@ func NewGenerator(characterSet []string, repeat int) *GENERATOR {
 
 	gen := &GENERATOR{
 		characterSet: characterSet,
-		maxRepeat:    repeat - 1,
+		maxRepeat:    repeat,
 		MaxCount:     maxCount,
 	}
 
@@ -69,7 +69,7 @@ func (g *GENERATOR) Inspect() string {
 func (g *GENERATOR) Type() ObjectType { return GENERATOR_OBJ }
 
 func (g *GENERATOR) Product() []string {
-	return g.repeat(g.characterSet, 0)
+	return g.repeat(g.characterSet, 1)
 }
 
 func (g *GENERATOR) Cross(other *GENERATOR) {
