@@ -2,10 +2,6 @@ package mask
 
 import (
 	"fmt"
-	"github.com/chainreactors/words/mask/eval"
-	"github.com/chainreactors/words/mask/lexer"
-	"github.com/chainreactors/words/mask/parser"
-	"github.com/chainreactors/words/mask/token"
 	"os"
 	"testing"
 )
@@ -14,24 +10,24 @@ func TestLexer(t *testing.T) {
 	input := "test{?lu#3}"
 	fmt.Printf("Input = %s\n", input)
 
-	l := lexer.NewLexer(input)
+	l := NewLexer(input)
 	for {
 		tok := l.NextToken()
 		fmt.Printf("Type: %s, Literal = %s\n", tok.Type, tok.Literal)
-		if tok.Type == token.TOKEN_EOF {
+		if tok.Type == TOKEN_EOF {
 			break
 		}
 	}
 }
 
 func TestParser(t *testing.T) {
-	parser.CustomWords = [][]string{
+	CustomWords = [][]string{
 		[]string{"aaa", "bbb", "ccc"},
 	}
 	input := "test{?123#3}"
 	expected := "test{?a,b,c,d,e,f,g,h,i,j,k,l,m,n,o,p,q,r,s,t,u,v,w,x,y,z,A,B,C,D,E,F,G,H,I,J,K,L,M,N,O,P,Q,R,S,T,U,V,W,X,Y,Z#3}"
-	l := lexer.NewLexer(input)
-	p := parser.NewParser(l)
+	l := NewLexer(input)
+	p := NewParser(l)
 	program := p.ParseProgram()
 	if len(p.Errors()) != 0 {
 		for _, err := range p.Errors() {
@@ -65,12 +61,12 @@ func TestEval(t *testing.T) {
 		//{"2 + 2 ** 2 ** 3", "258"},
 		//{"10", "10"},
 	}
-	parser.CustomWords = [][]string{
+	CustomWords = [][]string{
 		[]string{"aaa", "bbb", "ccc"},
 	}
 	for _, tt := range tests {
-		l := lexer.NewLexer(tt.input)
-		p := parser.NewParser(l)
+		l := NewLexer(tt.input)
+		p := NewParser(l)
 		program := p.ParseProgram()
 		if len(p.Errors()) != 0 {
 			for _, err := range p.Errors() {
@@ -79,7 +75,7 @@ func TestEval(t *testing.T) {
 			break
 		}
 
-		evaluated := eval.Eval(program)
+		evaluated := Eval(program)
 		if evaluated != nil {
 			if evaluated.Inspect() != tt.expected {
 				fmt.Printf("%s\n", evaluated.Inspect())
@@ -91,6 +87,6 @@ func TestEval(t *testing.T) {
 }
 
 func TestGenerator(t *testing.T) {
-	gen := eval.NewGenerator([]string{"a", "b", "c", "d"}, 3)
+	gen := NewGenerator([]string{"a", "b", "c", "d"}, 3)
 	println(gen.Strings)
 }

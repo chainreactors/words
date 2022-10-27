@@ -1,7 +1,6 @@
-package lexer
+package mask
 
 import (
-	"github.com/chainreactors/words/mask/token"
 	"unicode"
 )
 
@@ -59,17 +58,17 @@ func (l *Lexer) peek() rune {
 	return l.input[l.readPosition]
 }
 
-func (l *Lexer) NextToken() token.Token {
-	var tok token.Token
+func (l *Lexer) NextToken() Token {
+	var tok Token
 	l.skipWhitespace()
 
 	pos := l.getPos()
 
 	switch l.ch {
 	case '?':
-		tok = newToken(token.TOKEN_START, l.ch)
+		tok = newToken(TOKEN_START, l.ch)
 	case '#':
-		tok = newToken(token.TOKEN_REPEAT, l.ch)
+		tok = newToken(TOKEN_REPEAT, l.ch)
 	//case '*':
 	//	if l.peek() == '*' {
 	//		tok = token.Start{Type: token.TOKEN_POWER, Literal: string(l.ch) + string(l.peek())}
@@ -82,25 +81,25 @@ func (l *Lexer) NextToken() token.Token {
 	//case '%':
 	//	tok = newToken(token.TOKEN_MOD, l.ch)
 	case '{':
-		tok = newToken(token.TOKEN_LPAREN, l.ch)
+		tok = newToken(TOKEN_LPAREN, l.ch)
 	case '}':
-		tok = newToken(token.TOKEN_RPAREN, l.ch)
+		tok = newToken(TOKEN_RPAREN, l.ch)
 	case 0:
 		tok.Literal = "<EOF>"
-		tok.Type = token.TOKEN_EOF
+		tok.Type = TOKEN_EOF
 	default:
 		if isDigit(l.ch) {
 			tok.Literal = l.readNumber()
-			tok.Type = token.TOKEN_NUMBER
+			tok.Type = TOKEN_NUMBER
 			tok.Pos = pos
 			return tok
 		} else if isLetter(l.ch) {
 			tok.Literal = l.readIdentifier()
 			tok.Pos = pos
-			tok.Type = token.LookupIdent(tok.Literal)
+			tok.Type = LookupIdent(tok.Literal)
 			return tok
 		} else {
-			tok = newToken(token.TOKEN_ILLEGAL, l.ch)
+			tok = newToken(TOKEN_ILLEGAL, l.ch)
 		}
 	}
 
@@ -138,8 +137,8 @@ func (l *Lexer) skipWhitespace() {
 	}
 }
 
-func (l *Lexer) getPos() token.Position {
-	return token.Position{
+func (l *Lexer) getPos() Position {
+	return Position{
 		Filename: l.filename,
 		Offset:   l.position,
 		Line:     l.line,
@@ -147,8 +146,8 @@ func (l *Lexer) getPos() token.Position {
 	}
 }
 
-func newToken(tokenType token.TokenType, ch rune) token.Token {
-	return token.Token{Type: tokenType, Literal: string(ch)}
+func newToken(tokenType TokenType, ch rune) Token {
+	return Token{Type: tokenType, Literal: string(ch)}
 }
 
 func isDigit(ch rune) bool {

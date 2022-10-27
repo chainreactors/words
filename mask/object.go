@@ -1,4 +1,4 @@
-package eval
+package mask
 
 import (
 	"fmt"
@@ -22,7 +22,7 @@ type Number struct {
 }
 
 func (n *Number) Inspect() string {
-	return fmt.Sprintf("%g", n.Value)
+	return fmt.Sprintf("%d", n.Value)
 }
 
 func (n *Number) Type() ObjectType { return NUMBER_OBJ }

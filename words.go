@@ -1,7 +1,7 @@
 package words
 
 import (
-	"github.com/chainreactors/words/mask/parser"
+	"github.com/chainreactors/words/mask"
 	"math/rand"
 	"time"
 	"unsafe"
@@ -31,8 +31,8 @@ func RandPath() string {
 		if remain == 0 {
 			cache, remain = src.Int63(), letterIdMax
 		}
-		if idx := int(cache & letterIdMask); idx < len(parser.Letter) {
-			b[i] = parser.Letter[idx]
+		if idx := int(cache & letterIdMask); idx < len(mask.Letter) {
+			b[i] = mask.Letter[idx]
 			i--
 		}
 		cache >>= letterIdBits

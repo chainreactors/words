@@ -1,11 +1,8 @@
-package parser
+package mask
 
 import (
 	"fmt"
 	"github.com/chainreactors/logs"
-	"github.com/chainreactors/words/mask/ast"
-	"github.com/chainreactors/words/mask/lexer"
-	"github.com/chainreactors/words/mask/token"
 	strconv "strconv"
 	"unicode/utf8"
 )
@@ -79,7 +76,7 @@ func ParseCharacterSetWithNumber(s string) []string {
 	return cs
 }
 
-var precedences = map[token.TokenType]int{
+var precedences = map[TokenType]int{
 
 	//token.TOKEN_PLUS:     SUM,
 	//token.TOKEN_MINUS:    SUM,
@@ -90,31 +87,31 @@ var precedences = map[token.TokenType]int{
 }
 
 type (
-	prefixParseFn func() ast.Expression
-	infixParseFn  func(ast.Expression) ast.Expression
+	prefixParseFn func() Expression
+	infixParseFn  func(Expression) Expression
 )
 
 type Parser struct {
-	l          *lexer.Lexer
+	l          *Lexer
 	errors     []string //error messages
 	errorLines []string //for using with wasm communication.
 
-	curToken  token.Token
-	peekToken token.Token
+	curToken  Token
+	peekToken Token
 
-	prefixParseFns map[token.TokenType]prefixParseFn
-	infixParseFns  map[token.TokenType]infixParseFn
+	prefixParseFns map[TokenType]prefixParseFn
+	infixParseFns  map[TokenType]infixParseFn
 }
 
-func (p *Parser) registerPrefix(tokenType token.TokenType, fn prefixParseFn) {
+func (p *Parser) registerPrefix(tokenType TokenType, fn prefixParseFn) {
 	p.prefixParseFns[tokenType] = fn
 }
 
-func (p *Parser) registerInfix(tokenType token.TokenType, fn infixParseFn) {
+func (p *Parser) registerInfix(tokenType TokenType, fn infixParseFn) {
 	p.infixParseFns[tokenType] = fn
 }
 
-func NewParser(l *lexer.Lexer) *Parser {
+func NewParser(l *Lexer) *Parser {
 	p := &Parser{
 		l:          l,
 		errors:     []string{},
@@ -129,21 +126,21 @@ func NewParser(l *lexer.Lexer) *Parser {
 }
 
 func (p *Parser) registerAction() {
-	p.prefixParseFns = make(map[token.TokenType]prefixParseFn)
+	p.prefixParseFns = make(map[TokenType]prefixParseFn)
 	//p.registerPrefix(token.TOKEN_ILLEGAL, p.parsePrefixIllegalExpression)
-	p.registerPrefix(token.TOKEN_NUMBER, p.parseNumber)
-	p.registerPrefix(token.TOKEN_IDENTIFIER, p.parseIdentifier)
+	p.registerPrefix(TOKEN_NUMBER, p.parseNumber)
+	p.registerPrefix(TOKEN_IDENTIFIER, p.parseIdentifier)
 	//p.registerPrefix(token.TOKEN_PLUS, p.parsePrefixExpression)
 	//p.registerPrefix(token.TOKEN_MINUS, p.parsePrefixExpression)
-	p.registerPrefix(token.TOKEN_LPAREN, p.parseMaskExpression)
+	p.registerPrefix(TOKEN_LPAREN, p.parseMaskExpression)
 
-	p.infixParseFns = make(map[token.TokenType]infixParseFn)
+	p.infixParseFns = make(map[TokenType]infixParseFn)
 
 }
 
-func (p *Parser) ParseProgram() *ast.Program {
-	program := &ast.Program{}
-	for p.curToken.Type != token.TOKEN_EOF {
+func (p *Parser) ParseProgram() *Program {
+	program := &Program{}
+	for p.curToken.Type != TOKEN_EOF {
 		program.Expressions = append(program.Expressions, p.parseExpression(LOWEST))
 		p.nextToken()
 	}
@@ -151,7 +148,7 @@ func (p *Parser) ParseProgram() *ast.Program {
 	return program
 }
 
-func (p *Parser) parseExpression(precedence int) ast.Expression {
+func (p *Parser) parseExpression(precedence int) Expression {
 	prefix := p.prefixParseFns[p.curToken.Type]
 	if prefix == nil {
 		p.noPrefixParseFnError(p.curToken.Type)
@@ -172,27 +169,27 @@ func (p *Parser) parseExpression(precedence int) ast.Expression {
 	return leftExp
 }
 
-func (p *Parser) parseMaskExpression() ast.Expression {
-	expression := &ast.MaskExpression{Start: p.peekToken}
+func (p *Parser) parseMaskExpression() Expression {
+	expression := &MaskExpression{Start: p.peekToken}
 
 	p.nextToken()
-	if p.peekToken.Type == token.TOKEN_IDENTIFIER {
+	if p.peekToken.Type == TOKEN_IDENTIFIER {
 		expression.CharacterSet = ParseCharacterSetWithIdent(p.peekToken.Literal)
-	} else if p.peekToken.Type == token.TOKEN_NUMBER {
+	} else if p.peekToken.Type == TOKEN_NUMBER {
 		expression.CharacterSet = ParseCharacterSetWithNumber(p.peekToken.Literal)
 	}
 
 	p.nextToken()
-	if p.peekToken.Type == token.TOKEN_REPEAT {
+	if p.peekToken.Type == TOKEN_REPEAT {
 		expression.RepeatToken = p.peekToken
 		p.nextToken()
-		if p.peekToken.Type == token.TOKEN_NUMBER {
+		if p.peekToken.Type == TOKEN_NUMBER {
 			expression.Repeat, _ = strconv.Atoi(p.peekToken.Literal)
 		}
 		p.nextToken()
 	}
 
-	if !p.expectPeek(token.TOKEN_RPAREN) {
+	if !p.expectPeek(TOKEN_RPAREN) {
 		return nil
 	}
 	return expression
@@ -252,8 +249,8 @@ func (p *Parser) parseMaskExpression() ast.Expression {
 //	return nil
 //}
 
-func (p *Parser) parseNumber() ast.Expression {
-	lit := &ast.NumberLiteral{Token: p.curToken}
+func (p *Parser) parseNumber() Expression {
+	lit := &NumberLiteral{Token: p.curToken}
 
 	value, err := strconv.ParseInt(p.curToken.Literal, 10, 32)
 	if err != nil {
@@ -266,23 +263,23 @@ func (p *Parser) parseNumber() ast.Expression {
 	return lit
 }
 
-func (p *Parser) parseIdentifier() ast.Expression {
-	return &ast.Identifier{Token: p.curToken, Value: p.curToken.Literal}
+func (p *Parser) parseIdentifier() Expression {
+	return &Identifier{Token: p.curToken, Value: p.curToken.Literal}
 }
 
-func (p *Parser) noPrefixParseFnError(t token.TokenType) {
-	if t != token.TOKEN_EOF {
+func (p *Parser) noPrefixParseFnError(t TokenType) {
+	if t != TOKEN_EOF {
 		msg := fmt.Sprintf("Syntax Error:%v- no prefix parse functions for '%s' found", p.curToken.Pos, t)
 		p.errors = append(p.errors, msg)
 		p.errorLines = append(p.errorLines, p.curToken.Pos.Sline())
 	}
 }
 
-func (p *Parser) curTokenIs(t token.TokenType) bool {
+func (p *Parser) curTokenIs(t TokenType) bool {
 	return p.curToken.Type == t
 }
 
-func (p *Parser) peekTokenIs(t token.TokenType) bool {
+func (p *Parser) peekTokenIs(t TokenType) bool {
 	return p.peekToken.Type == t
 }
 
@@ -305,7 +302,7 @@ func (p *Parser) nextToken() {
 	p.peekToken = p.l.NextToken()
 }
 
-func (p *Parser) expectPeek(t token.TokenType) bool {
+func (p *Parser) expectPeek(t TokenType) bool {
 	if p.peekTokenIs(t) {
 		p.nextToken()
 		return true
@@ -314,7 +311,7 @@ func (p *Parser) expectPeek(t token.TokenType) bool {
 	return false
 }
 
-func (p *Parser) peekError(t token.TokenType) {
+func (p *Parser) peekError(t TokenType) {
 	newPos := p.curToken.Pos
 	newPos.Col = newPos.Col + utf8.RuneCountInString(p.curToken.Literal)
 	msg := fmt.Sprintf("Syntax Error:%v- expected next token to be %s, got %s instead", newPos, t, p.peekToken.Type)
@@ -335,6 +332,6 @@ func (p *Parser) debugToken(message string) {
 	fmt.Printf("%s, curToken = %s, curToken.Pos = %d, peekToken = %s, peekToken.Pos=%d\n", message, p.curToken.Literal, p.curToken.Pos.Line, p.peekToken.Literal, p.peekToken.Pos.Line)
 }
 
-func (p *Parser) debugNode(message string, node ast.Node) {
+func (p *Parser) debugNode(message string, node Node) {
 	fmt.Printf("%s, Node = %s\n", message, node.String())
 }

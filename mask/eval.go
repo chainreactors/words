@@ -1,16 +1,12 @@
-package eval
+package mask
 
-import (
-	"github.com/chainreactors/words/mask/ast"
-)
-
-func Eval(node ast.Node) (val Object) {
+func Eval(node Node) (val Object) {
 	switch node := node.(type) {
-	case *ast.Program:
+	case *Program:
 		return evalProgram(node)
 	//case *ast.NumberLiteral:
 	//	return evalNumber(node)
-	case *ast.MaskExpression:
+	case *MaskExpression:
 		return evalMask(node)
 		//return evalMask(node)
 		//case *ast.PrefixExpression:
@@ -26,15 +22,15 @@ func Eval(node ast.Node) (val Object) {
 	return nil
 }
 
-func evalProgram(program *ast.Program) *GENERATOR {
+func evalProgram(program *Program) *GENERATOR {
 	var results *GENERATOR
 	for _, expr := range program.Expressions {
 		var g *GENERATOR
 		switch expr.(type) {
-		case *ast.Identifier:
-			g = NewGeneratorSingle(expr.(*ast.Identifier).String())
-		case *ast.MaskExpression:
-			g = evalMask(expr.(*ast.MaskExpression)).(*GENERATOR)
+		case *Identifier:
+			g = NewGeneratorSingle(expr.(*Identifier).String())
+		case *MaskExpression:
+			g = evalMask(expr.(*MaskExpression)).(*GENERATOR)
 		default:
 		}
 		if results == nil {
@@ -54,6 +50,6 @@ func evalProgram(program *ast.Program) *GENERATOR {
 //	return NewNumber(n.Value)
 //}
 
-func evalMask(n *ast.MaskExpression) Object {
+func evalMask(n *MaskExpression) Object {
 	return NewGenerator(n.CharacterSet, n.Repeat)
 }

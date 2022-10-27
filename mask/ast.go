@@ -1,16 +1,15 @@
-package ast
+package mask
 
 import (
 	"bytes"
-	"github.com/chainreactors/words/mask/token"
 	"strconv"
 	"strings"
 	"unicode/utf8"
 )
 
 type Node interface {
-	Pos() token.Position // position of first character belonging to the node
-	End() token.Position // position of first character immediately after the node
+	Pos() Position // position of first character belonging to the node
+	End() Position // position of first character immediately after the node
 
 	TokenLiteral() string
 	String() string
@@ -25,19 +24,19 @@ type Program struct {
 	Expressions []Expression
 }
 
-func (p *Program) Pos() token.Position {
+func (p *Program) Pos() Position {
 	if len(p.Expressions) > 0 {
 		return p.Expressions[0].Pos()
 	}
-	return token.Position{}
+	return Position{}
 }
 
-func (p *Program) End() token.Position {
+func (p *Program) End() Position {
 	aLen := len(p.Expressions)
 	if aLen > 0 {
 		return p.Expressions[aLen-1].End()
 	}
-	return token.Position{}
+	return Position{}
 }
 
 func (p *Program) TokenLiteral() string {
@@ -57,14 +56,14 @@ func (p *Program) String() string {
 }
 
 type MaskExpression struct {
-	Start        token.Token
+	Start        Token
 	CharacterSet []string
-	RepeatToken  token.Token
+	RepeatToken  Token
 	Repeat       int
 }
 
-func (ie *MaskExpression) Pos() token.Position { return ie.Start.Pos }
-func (ie *MaskExpression) End() token.Position {
+func (ie *MaskExpression) Pos() Position { return ie.Start.Pos }
+func (ie *MaskExpression) End() Position {
 	pos := ie.RepeatToken.Pos
 	pos.Offset = pos.Offset + len(strconv.Itoa(int(ie.Repeat)))
 	return pos
@@ -134,15 +133,15 @@ func (ie *MaskExpression) String() string {
 //}
 
 type NumberLiteral struct {
-	Token token.Token
+	Token Token
 	Value int64
 }
 
-func (nl *NumberLiteral) Pos() token.Position { return nl.Token.Pos }
-func (nl *NumberLiteral) End() token.Position {
+func (nl *NumberLiteral) Pos() Position { return nl.Token.Pos }
+func (nl *NumberLiteral) End() Position {
 	length := utf8.RuneCountInString(nl.Token.Literal)
 	pos := nl.Token.Pos
-	return token.Position{Filename: pos.Filename, Line: pos.Line, Col: pos.Col + length}
+	return Position{Filename: pos.Filename, Line: pos.Line, Col: pos.Col + length}
 }
 
 func (nl *NumberLiteral) expressionNode()      {}
@@ -150,14 +149,14 @@ func (nl *NumberLiteral) TokenLiteral() string { return nl.Token.Literal }
 func (nl *NumberLiteral) String() string       { return nl.Token.Literal }
 
 type Identifier struct {
-	Token token.Token
+	Token Token
 	Value string
 }
 
-func (i *Identifier) Pos() token.Position { return i.Token.Pos }
-func (i *Identifier) End() token.Position {
+func (i *Identifier) Pos() Position { return i.Token.Pos }
+func (i *Identifier) End() Position {
 	length := utf8.RuneCountInString(i.Value)
-	return token.Position{Filename: i.Token.Pos.Filename, Line: i.Token.Pos.Line, Col: i.Token.Pos.Col + length}
+	return Position{Filename: i.Token.Pos.Filename, Line: i.Token.Pos.Line, Col: i.Token.Pos.Col + length}
 }
 func (i *Identifier) expressionNode()      {}
 func (i *Identifier) TokenLiteral() string { return i.Token.Literal }
