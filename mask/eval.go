@@ -1,5 +1,10 @@
 package mask
 
+import (
+	"fmt"
+	"github.com/chainreactors/logs"
+)
+
 func Eval(node Node) (val Object) {
 	switch node := node.(type) {
 	case *Program:
@@ -52,4 +57,32 @@ func evalProgram(program *Program) *GENERATOR {
 
 func evalMask(n *MaskExpression) Object {
 	return NewGenerator(n.CharacterSet, n.Repeat)
+}
+
+func Run(code string) ([]string, error) {
+	l := NewLexer(code)
+	p := NewParser(l)
+	program := p.ParseProgram()
+	if len(p.Errors()) != 0 {
+		for _, err := range p.Errors() {
+			logs.Log.Error(err)
+		}
+		return nil, fmt.Errorf("compile error")
+	}
+
+	return Eval(program).(*GENERATOR).Strings, nil
+}
+
+func RunToStream(code string) (chan string, error) {
+	l := NewLexer(code)
+	p := NewParser(l)
+	program := p.ParseProgram()
+	if len(p.Errors()) != 0 {
+		for _, err := range p.Errors() {
+			logs.Log.Error(err)
+		}
+		return nil, fmt.Errorf("compile error")
+	}
+
+	return Eval(program).(*GENERATOR).Stream(), nil
 }
