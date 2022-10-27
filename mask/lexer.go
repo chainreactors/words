@@ -156,6 +156,7 @@ func (l *Lexer) readMask() []Token {
 		}
 
 		toks = append(toks, newToken(TOKEN_RPAREN, l.ch, l.getPos()))
+		l.readNext()
 		return toks
 	} else {
 		return []Token{Token{

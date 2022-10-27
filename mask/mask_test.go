@@ -7,7 +7,7 @@ import (
 )
 
 func TestLexer(t *testing.T) {
-	input := "{{{{?111#3}.oocl.com中文测试11{}{{{{??}?"
+	input := "test{?123}"
 	fmt.Printf("Input = %s\n", input)
 
 	l := NewLexer(input)
@@ -50,8 +50,8 @@ func TestEval(t *testing.T) {
 		input    string
 		expected string
 	}{
-		{"test{?lu#3}", "test{?abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ#3}"},
-		//{"test{?123}", ""},
+		//{"test{?lu#3}", "test{?abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ#3}"},
+		{"test{?123}", ""},
 		//{"1 + 2", "3"},
 		//{"2 + (3 * 4) / ( 6 - 3 ) + 10", "16"},
 		//{"2 + 3 * 4 / 6 - 3  + 10", "11"},
