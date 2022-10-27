@@ -25,8 +25,11 @@ func TestLexer(t *testing.T) {
 }
 
 func TestParser(t *testing.T) {
-	input := "test{?lu#3}"
-	expected := "test{?abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ#3}"
+	parser.CustomWords = [][]string{
+		[]string{"aaa", "bbb", "ccc"},
+	}
+	input := "test{?123#3}"
+	expected := "test{?a,b,c,d,e,f,g,h,i,j,k,l,m,n,o,p,q,r,s,t,u,v,w,x,y,z,A,B,C,D,E,F,G,H,I,J,K,L,M,N,O,P,Q,R,S,T,U,V,W,X,Y,Z#3}"
 	l := lexer.NewLexer(input)
 	p := parser.NewParser(l)
 	program := p.ParseProgram()
@@ -52,6 +55,7 @@ func TestEval(t *testing.T) {
 		expected string
 	}{
 		{"test{?lu#3}", "test{?abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ#3}"},
+		//{"test{?123}", ""},
 		//{"1 + 2", "3"},
 		//{"2 + (3 * 4) / ( 6 - 3 ) + 10", "16"},
 		//{"2 + 3 * 4 / 6 - 3  + 10", "11"},
@@ -61,7 +65,9 @@ func TestEval(t *testing.T) {
 		//{"2 + 2 ** 2 ** 3", "258"},
 		//{"10", "10"},
 	}
-
+	parser.CustomWords = [][]string{
+		[]string{"aaa", "bbb", "ccc"},
+	}
 	for _, tt := range tests {
 		l := lexer.NewLexer(tt.input)
 		p := parser.NewParser(l)

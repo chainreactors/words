@@ -76,7 +76,7 @@ func (ie *MaskExpression) String() string {
 	var out bytes.Buffer
 
 	out.WriteString("{?")
-	out.WriteString(strings.Join(ie.CharacterSet, ""))
+	out.WriteString(strings.Join(ie.CharacterSet, ","))
 	out.WriteString("#")
 	out.WriteString(strconv.Itoa(int(ie.Repeat)))
 	out.WriteString("}")

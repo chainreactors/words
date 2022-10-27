@@ -2,6 +2,7 @@ package parser
 
 import (
 	"fmt"
+	"github.com/chainreactors/logs"
 	"github.com/chainreactors/words/mask/ast"
 	"github.com/chainreactors/words/mask/lexer"
 	"github.com/chainreactors/words/mask/token"
@@ -44,6 +45,12 @@ var MetawordMap = map[string]string{
 	"s": Whitespace,
 }
 
+var CustomWords [][]string
+
+func AddCustomWord(s []string) {
+	CustomWords = append(CustomWords, s)
+}
+
 func string2Bytes(s string) []string {
 	ss := make([]string, len(s))
 	for i := 0; i < len(s); i++ {
@@ -52,10 +59,22 @@ func string2Bytes(s string) []string {
 	return ss
 }
 
-func ParseCharacterSet(s string) []string {
+func ParseCharacterSetWithIdent(s string) []string {
 	var cs []string
 	for i := 0; i < len(s); i++ {
 		cs = append(cs, string2Bytes(MetawordMap[string(s[i])])...)
+	}
+	return cs
+}
+
+func ParseCharacterSetWithNumber(s string) []string {
+	var cs []string
+	for i := 0; i < len(s); i++ {
+		if len(CustomWords) >= i+1 {
+			cs = append(cs, CustomWords[i]...)
+		} else {
+			logs.Log.Warnf("index %d out of dicts, not enough dict", i)
+		}
 	}
 	return cs
 }
@@ -119,13 +138,7 @@ func (p *Parser) registerAction() {
 	p.registerPrefix(token.TOKEN_LPAREN, p.parseMaskExpression)
 
 	p.infixParseFns = make(map[token.TokenType]infixParseFn)
-	//p.registerPrefix(token.TOKEN_ILLEGAL, p.parseInfixIllegalExpression)
-	//p.registerInfix(token.TOKEN_PLUS, p.parseInfixExpression)
-	//p.registerInfix(token.TOKEN_MINUS, p.parseInfixExpression)
-	//p.registerInfix(token.TOKEN_MULTIPLY, p.parseInfixExpression)
-	//p.registerInfix(token.TOKEN_DIVIDE, p.parseInfixExpression)
-	//p.registerInfix(token.TOKEN_MOD, p.parseInfixExpression)
-	//p.registerInfix(token.TOKEN_POWER, p.parseInfixExpression)
+
 }
 
 func (p *Parser) ParseProgram() *ast.Program {
@@ -161,20 +174,24 @@ func (p *Parser) parseExpression(precedence int) ast.Expression {
 
 func (p *Parser) parseMaskExpression() ast.Expression {
 	expression := &ast.MaskExpression{Start: p.peekToken}
+
 	p.nextToken()
-	if p.expectPeek(token.TOKEN_IDENTIFIER) {
-		expression.CharacterSet = ParseCharacterSet(p.curToken.Literal)
+	if p.peekToken.Type == token.TOKEN_IDENTIFIER {
+		expression.CharacterSet = ParseCharacterSetWithIdent(p.peekToken.Literal)
+	} else if p.peekToken.Type == token.TOKEN_NUMBER {
+		expression.CharacterSet = ParseCharacterSetWithNumber(p.peekToken.Literal)
 	}
 
+	p.nextToken()
 	if p.peekToken.Type == token.TOKEN_REPEAT {
 		expression.RepeatToken = p.peekToken
 		p.nextToken()
 		if p.peekToken.Type == token.TOKEN_NUMBER {
 			expression.Repeat, _ = strconv.Atoi(p.peekToken.Literal)
 		}
+		p.nextToken()
 	}
 
-	p.nextToken()
 	if !p.expectPeek(token.TOKEN_RPAREN) {
 		return nil
 	}
@@ -269,19 +286,19 @@ func (p *Parser) peekTokenIs(t token.TokenType) bool {
 	return p.peekToken.Type == t
 }
 
-func (p *Parser) peekPrecedence() int {
-	if p, ok := precedences[p.peekToken.Type]; ok {
-		return p
-	}
-	return LOWEST
-}
-
-func (p *Parser) curPrecedence() int {
-	if p, ok := precedences[p.curToken.Type]; ok {
-		return p
-	}
-	return LOWEST
-}
+//func (p *Parser) peekPrecedence() int {
+//	if p, ok := precedences[p.peekToken.Type]; ok {
+//		return p
+//	}
+//	return LOWEST
+//}
+//
+//func (p *Parser) curPrecedence() int {
+//	if p, ok := precedences[p.curToken.Type]; ok {
+//		return p
+//	}
+//	return LOWEST
+//}
 
 func (p *Parser) nextToken() {
 	p.curToken = p.peekToken
