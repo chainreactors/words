@@ -2,19 +2,17 @@ package words
 
 import (
 	"bufio"
+	"github.com/chainreactors/words/mask"
 	"os"
 	"strings"
 )
 
-var DefaultPeriod = 0
-
 func NewWorder(wordlist []string) *Worder {
 	worder := &Worder{
-		checkPeriod: DefaultPeriod,
-		token:       0,
-		wordlist:    wordlist,
-		ch:          make(chan string),
-		C:           make(chan string),
+		token:    0,
+		wordlist: wordlist,
+		ch:       make(chan string),
+		C:        make(chan string),
 		//checkCh:     make(chan string),
 	}
 
@@ -31,12 +29,10 @@ func NewWorder(wordlist []string) *Worder {
 
 func NewWorderWithFile(file *os.File) *Worder {
 	worder := &Worder{
-		checkPeriod: DefaultPeriod,
-		token:       0,
-		scanner:     bufio.NewScanner(file),
-		ch:          make(chan string),
-		C:           make(chan string),
-		//checkCh:     make(chan string, 10),
+		token:   0,
+		scanner: bufio.NewScanner(file),
+		ch:      make(chan string),
+		C:       make(chan string),
 	}
 	go func() {
 		for worder.scanner.Scan() {
@@ -49,29 +45,35 @@ func NewWorderWithFile(file *os.File) *Worder {
 	return worder
 }
 
+func NewWorderWithDSL(dsl string) *Worder {
+	worder := &Worder{
+		token: 0,
+		C:     make(chan string),
+	}
+	ch, err := mask.RunToStream(dsl)
+	if err != nil {
+		panic(err)
+	}
+	worder.ch = ch
+	worder.init()
+	return worder
+}
+
 type Worder struct {
 	ch chan string
 	C  chan string
 	//checkCh     chan string
-	token       int
-	wordlist    []string
-	scanner     *bufio.Scanner
-	checkPeriod int
-	Closed      bool
-}
-
-func (word *Worder) SetPeriod(period int) {
-	word.checkPeriod = period
+	token    int
+	wordlist []string
+	scanner  *bufio.Scanner
+	Closed   bool
 }
 
 func (word *Worder) init() {
 	go func() {
-		for path := range word.ch {
+		for w := range word.ch {
 			word.token++
-			if word.checkPeriod != 0 && (word.token%word.checkPeriod) == 0 {
-				word.C <- RandPath()
-			}
-			word.C <- path
+			word.C <- w
 		}
 		close(word.C)
 	}()
