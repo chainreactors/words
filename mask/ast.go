@@ -74,7 +74,8 @@ func (ie *MaskExpression) TokenLiteral() string { return ie.Start.Literal }
 func (ie *MaskExpression) String() string {
 	var out bytes.Buffer
 
-	out.WriteString("{?")
+	out.WriteString("{")
+	out.WriteString(ie.Start.String())
 	out.WriteString(strings.Join(ie.CharacterSet, ","))
 	out.WriteString("#")
 	out.WriteString(strconv.Itoa(int(ie.Repeat)))

@@ -126,7 +126,7 @@ func (l *Lexer) readMask() []Token {
 	lparenTok := newToken(TOKEN_LPAREN, l.ch, l.getPos())
 	//toks = append(toks, newToken(TOKEN_LPAREN, l.ch, l.getPos()))
 	l.readNext()
-	if l.ch == '?' {
+	if l.ch == '?' || l.ch == '$' {
 		var toks []Token
 		toks = append(toks, lparenTok)
 		toks = append(toks, newToken(TOKEN_START, l.ch, l.getPos()))

@@ -56,7 +56,11 @@ func evalProgram(program *Program) *GENERATOR {
 //}
 
 func evalMask(n *MaskExpression) Object {
-	return NewGenerator(n.CharacterSet, n.Repeat)
+	if n.Start.Literal == "?" {
+		return NewGenerator(n.CharacterSet, n.Repeat, false)
+	} else {
+		return NewGenerator(n.CharacterSet, n.Repeat, true)
+	}
 }
 
 func Run(code string) ([]string, error) {

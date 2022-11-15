@@ -2,7 +2,7 @@ package mask
 
 import "strings"
 
-func NewGenerator(characterSet []string, repeat int) *GENERATOR {
+func NewGenerator(characterSet []string, repeat int, greedy bool) *GENERATOR {
 	length := len(characterSet)
 	maxCount := length
 
@@ -14,9 +14,10 @@ func NewGenerator(characterSet []string, repeat int) *GENERATOR {
 		characterSet: characterSet,
 		maxRepeat:    repeat,
 		MaxCount:     maxCount,
+		greedy:       greedy,
 	}
 
-	gen.Strings = gen.Product()
+	gen.Product()
 	return gen
 }
 
@@ -32,6 +33,7 @@ func NewGeneratorSingle(s string) *GENERATOR {
 
 type GENERATOR struct {
 	close        bool
+	greedy       bool
 	characterSet []string
 	Strings      []string
 	Count        int
@@ -57,7 +59,12 @@ func (g *GENERATOR) repeat(ss []string, cur int) []string {
 	}
 
 	if cur < g.maxRepeat {
+		if g.greedy {
+			g.Strings = append(g.Strings, ss...)
+		}
 		return g.repeat(Product(ss, g.characterSet), cur+1)
+	} else {
+		g.Strings = append(g.Strings, ss...)
 	}
 	return ss
 }
