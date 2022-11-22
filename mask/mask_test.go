@@ -87,10 +87,11 @@ func TestEval(t *testing.T) {
 }
 
 func TestRun(t *testing.T) {
-	words, err := Run("{?l#2}.oocl.com")
-	println(words, err)
+	words, err := Run("{$l#2}.oocl.com")
+	fmt.Printf("%v,%v", words, err)
 }
+
 func TestGenerator(t *testing.T) {
-	gen := NewGenerator([]string{"a", "b", "c", "d"}, 3)
-	println(gen.Strings)
+	gen := NewGenerator([]string{"a", "b", "c", "d"}, 3, false)
+	fmt.Printf("%v", gen.Strings)
 }

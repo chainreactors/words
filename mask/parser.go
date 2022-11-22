@@ -7,15 +7,6 @@ import (
 	"unicode/utf8"
 )
 
-const (
-	_ int = iota
-	LOWEST
-
-	SUM
-	PRODUCT
-	PREFIX
-)
-
 var (
 	Lowercase    = "abcdefghijklmnopqrstuvwxyz"
 	Uppercase    = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
@@ -76,19 +67,8 @@ func ParseCharacterSetWithNumber(s string) []string {
 	return cs
 }
 
-var precedences = map[TokenType]int{
-
-	//token.TOKEN_PLUS:     SUM,
-	//token.TOKEN_MINUS:    SUM,
-	//token.TOKEN_MULTIPLY: PRODUCT,
-	//token.TOKEN_DIVIDE:   PRODUCT,
-	//token.TOKEN_MOD:      PRODUCT,
-	//token.TOKEN_POWER:    PRODUCT,
-}
-
 type (
 	prefixParseFn func() Expression
-	infixParseFn  func(Expression) Expression
 )
 
 type Parser struct {
@@ -102,15 +82,10 @@ type Parser struct {
 	curCache   int
 
 	prefixParseFns map[TokenType]prefixParseFn
-	infixParseFns  map[TokenType]infixParseFn
 }
 
 func (p *Parser) registerPrefix(tokenType TokenType, fn prefixParseFn) {
 	p.prefixParseFns[tokenType] = fn
-}
-
-func (p *Parser) registerInfix(tokenType TokenType, fn infixParseFn) {
-	p.infixParseFns[tokenType] = fn
 }
 
 func NewParser(l *Lexer) *Parser {
@@ -128,45 +103,28 @@ func NewParser(l *Lexer) *Parser {
 }
 
 func (p *Parser) registerAction() {
-	p.prefixParseFns = make(map[TokenType]prefixParseFn)
-	//p.registerPrefix(token.TOKEN_ILLEGAL, p.parsePrefixIllegalExpression)
 	p.registerPrefix(TOKEN_NUMBER, p.parseNumber)
 	p.registerPrefix(TOKEN_IDENTIFIER, p.parseIdentifier)
-	//p.registerPrefix(token.TOKEN_PLUS, p.parsePrefixExpression)
-	//p.registerPrefix(token.TOKEN_MINUS, p.parsePrefixExpression)
 	p.registerPrefix(TOKEN_LPAREN, p.parseMaskExpression)
-
-	p.infixParseFns = make(map[TokenType]infixParseFn)
-
 }
 
 func (p *Parser) ParseProgram() *Program {
 	program := &Program{}
 	for p.curToken.Type != TOKEN_EOF {
-		program.Expressions = append(program.Expressions, p.parseExpression(LOWEST))
+		program.Expressions = append(program.Expressions, p.parseExpression())
 		p.nextToken()
 	}
 
 	return program
 }
 
-func (p *Parser) parseExpression(precedence int) Expression {
+func (p *Parser) parseExpression() Expression {
 	prefix := p.prefixParseFns[p.curToken.Type]
 	if prefix == nil {
 		p.noPrefixParseFnError(p.curToken.Type)
 		return nil
 	}
 	leftExp := prefix()
-
-	// Run the infix function until the next token has a higher precedence.
-	//for precedence < p.peekPrecedence() {
-	//	infix := p.infixParseFns[p.peekToken.Type]
-	//	if infix == nil {
-	//		return leftExp
-	//	}
-	//	p.nextToken()
-	//	leftExp = infix(leftExp)
-	//}
 
 	return leftExp
 }
@@ -196,60 +154,6 @@ func (p *Parser) parseMaskExpression() Expression {
 	}
 	return expression
 }
-
-//func (p *Parser) parsePrefixExpression() ast.Expression {
-//	expression := &ast.PrefixExpression{Start: p.curToken, Operator: p.curToken.Literal}
-//	p.nextToken()
-//	expression.Right = p.parseExpression(PREFIX)
-//
-//	return expression
-//}
-
-//func (p *Parser) parseInfixExpression(left ast.Expression) ast.Expression {
-//	expression := &ast.InfixExpression{
-//		Start:    p.curToken,
-//		Operator: p.curToken.Literal,
-//		Left:     left,
-//	}
-//	precedence := p.curPrecedence()
-//
-//	// if the token is '**', we process it specially. e.g. 3 ** 2 ** 3 = 3 ** (2 ** 3)
-//	// i.e. Exponent operator '**'' has right-to-left associativity
-//	//if p.curTokenIs(token.TOKEN_POWER) {
-//	//	precedence--
-//	//}
-//
-//	p.nextToken()
-//	expression.Right = p.parseExpression(precedence)
-//
-//	return expression
-//}
-
-//func (p *Parser) parseGroupedExpression() ast.Expression {
-//	p.nextToken()
-//
-//	exp := p.parseExpression(LOWEST)
-//
-//	if !p.expectPeek(token.TOKEN_RPAREN) {
-//		return nil
-//	}
-//
-//	return exp
-//}
-//
-//func (p *Parser) parsePrefixIllegalExpression() ast.Expression {
-//	msg := fmt.Sprintf("Syntax Error:%v - Illegal token found. Literal: '%s'", p.curToken.Pos, p.curToken.Literal)
-//	p.errors = append(p.errors, msg)
-//	p.errorLines = append(p.errorLines, p.curToken.Pos.Sline())
-//	return nil
-//}
-//
-//func (p *Parser) parseInfixIllegalExpression() ast.Expression {
-//	msg := fmt.Sprintf("Syntax Error:%v - Illegal token found. Literal: '%s'", p.curToken.Pos, p.curToken.Literal)
-//	p.errors = append(p.errors, msg)
-//	p.errorLines = append(p.errorLines, p.curToken.Pos.Sline())
-//	return nil
-//}
 
 func (p *Parser) parseNumber() Expression {
 	lit := &NumberLiteral{Token: p.curToken}
@@ -284,20 +188,6 @@ func (p *Parser) curTokenIs(t TokenType) bool {
 func (p *Parser) peekTokenIs(t TokenType) bool {
 	return p.peekToken.Type == t
 }
-
-//func (p *Parser) peekPrecedence() int {
-//	if p, ok := precedences[p.peekToken.Type]; ok {
-//		return p
-//	}
-//	return LOWEST
-//}
-//
-//func (p *Parser) curPrecedence() int {
-//	if p, ok := precedences[p.curToken.Type]; ok {
-//		return p
-//	}
-//	return LOWEST
-//}
 
 func (p *Parser) nextToken() {
 	p.curToken = p.peekToken

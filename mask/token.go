@@ -11,12 +11,6 @@ const (
 	TOKEN_ILLEGAL TokenType = (iota - 1) // Illegal token
 	TOKEN_EOF                            //End Of File
 
-	//TOKEN_PLUS     // +
-	//TOKEN_MINUS    // -
-	//TOKEN_MULTIPLY // *
-	//TOKEN_DIVIDE   // '/'
-	//TOKEN_MOD      // '%'
-	//TOKEN_POWER    // **
 	TOKEN_START  // ?
 	TOKEN_REPEAT // #
 
@@ -38,18 +32,6 @@ func (tt TokenType) String() string {
 		return "?"
 	case TOKEN_REPEAT:
 		return "#"
-	//case TOKEN_PLUS:
-	//	return "+"
-	//case TOKEN_MINUS:
-	//	return "-"
-	//case TOKEN_MULTIPLY:
-	//	return "*"
-	//case TOKEN_DIVIDE:
-	//	return "/"
-	//case TOKEN_MOD:
-	//	return "%"
-	//case TOKEN_POWER:
-	//	return "**"
 
 	case TOKEN_LPAREN:
 		return "{"

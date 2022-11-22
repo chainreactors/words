@@ -142,7 +142,7 @@ func (nl *NumberLiteral) Pos() Position { return nl.Token.Pos }
 func (nl *NumberLiteral) End() Position {
 	length := utf8.RuneCountInString(nl.Token.Literal)
 	pos := nl.Token.Pos
-	return Position{Filename: pos.Filename, Line: pos.Line, Col: pos.Col + length}
+	return Position{Line: pos.Line, Col: pos.Col + length}
 }
 
 func (nl *NumberLiteral) expressionNode()      {}
@@ -157,7 +157,7 @@ type Identifier struct {
 func (i *Identifier) Pos() Position { return i.Token.Pos }
 func (i *Identifier) End() Position {
 	length := utf8.RuneCountInString(i.Value)
-	return Position{Filename: i.Token.Pos.Filename, Line: i.Token.Pos.Line, Col: i.Token.Pos.Col + length}
+	return Position{Line: i.Token.Pos.Line, Col: i.Token.Pos.Col + length}
 }
 func (i *Identifier) expressionNode()      {}
 func (i *Identifier) TokenLiteral() string { return i.Token.Literal }

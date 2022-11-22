@@ -6,7 +6,6 @@ import (
 
 // Lexer
 type Lexer struct {
-	filename     string
 	input        []rune
 	ch           rune //current character
 	position     int  //character offset
@@ -189,10 +188,9 @@ func (l *Lexer) skipWhitespace() {
 
 func (l *Lexer) getPos() Position {
 	return Position{
-		Filename: l.filename,
-		Offset:   l.position,
-		Line:     l.line,
-		Col:      l.col,
+		Offset: l.position,
+		Line:   l.line,
+		Col:    l.col,
 	}
 }
 
