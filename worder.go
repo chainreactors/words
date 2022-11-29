@@ -7,13 +7,13 @@ import (
 	"strings"
 )
 
-func NewWorder(wordlist []string) *Worder {
+func NewWorder(wordlist []string, fns []func(string) string) *Worder {
 	worder := &Worder{
 		token:    0,
 		wordlist: wordlist,
 		ch:       make(chan string),
 		C:        make(chan string),
-		//checkCh:     make(chan string),
+		Fns:      fns,
 	}
 
 	go func() {
@@ -27,12 +27,13 @@ func NewWorder(wordlist []string) *Worder {
 	return worder
 }
 
-func NewWorderWithFile(file *os.File) *Worder {
+func NewWorderWithFile(file *os.File, fns []func(string) string) *Worder {
 	worder := &Worder{
 		token:   0,
 		scanner: bufio.NewScanner(file),
 		ch:      make(chan string),
 		C:       make(chan string),
+		Fns:     fns,
 	}
 	go func() {
 		for worder.scanner.Scan() {
@@ -60,12 +61,12 @@ func NewWorderWithDSL(dsl string) *Worder {
 }
 
 type Worder struct {
-	ch chan string
-	C  chan string
-	//checkCh     chan string
+	ch       chan string
+	C        chan string
 	token    int
 	wordlist []string
 	scanner  *bufio.Scanner
+	Fns      []func(string) string
 	Closed   bool
 }
 
@@ -73,6 +74,12 @@ func (word *Worder) init() {
 	go func() {
 		for w := range word.ch {
 			word.token++
+			if w == "" {
+				continue
+			}
+			for _, fn := range word.Fns {
+				w = fn(w)
+			}
 			word.C <- w
 		}
 		close(word.C)
