@@ -34,6 +34,7 @@ var MetawordMap = map[string]string{
 }
 
 var CustomWords [][]string
+var SpecialWords map[string][]string = map[string][]string{}
 
 func AddCustomWord(s []string) {
 	CustomWords = append(CustomWords, s)
@@ -45,6 +46,14 @@ func string2Bytes(s string) []string {
 		ss[i] = string(s[i])
 	}
 	return ss
+}
+
+func ParseCharacterSetWithSpecial(s string) []string {
+	if ss, ok := SpecialWords[s]; ok {
+		return ss
+	} else {
+		return nil
+	}
 }
 
 func ParseCharacterSetWithIdent(s string) []string {
@@ -103,6 +112,7 @@ func NewParser(l *Lexer) *Parser {
 }
 
 func (p *Parser) registerAction() {
+	p.prefixParseFns = make(map[TokenType]prefixParseFn)
 	p.registerPrefix(TOKEN_NUMBER, p.parseNumber)
 	p.registerPrefix(TOKEN_IDENTIFIER, p.parseIdentifier)
 	p.registerPrefix(TOKEN_LPAREN, p.parseMaskExpression)
@@ -133,13 +143,19 @@ func (p *Parser) parseMaskExpression() Expression {
 	expression := &MaskExpression{Start: p.peekToken}
 
 	p.nextToken()
-	if p.peekToken.Type == TOKEN_IDENTIFIER {
-		expression.CharacterSet = ParseCharacterSetWithIdent(p.peekToken.Literal)
-	} else if p.peekToken.Type == TOKEN_NUMBER {
-		expression.CharacterSet = ParseCharacterSetWithNumber(p.peekToken.Literal)
+	for p.peekToken.Type != TOKEN_REPEAT && p.peekToken.Type != TOKEN_RPAREN {
+		if p.peekToken.Type == TOKEN_IDENTIFIER {
+			if expression.Start.Literal == "@" {
+				expression.CharacterSet = append(expression.CharacterSet, ParseCharacterSetWithSpecial(p.peekToken.Literal)...)
+			} else if expression.Start.Literal == "?" {
+				expression.CharacterSet = ParseCharacterSetWithIdent(p.peekToken.Literal)
+			}
+		} else if p.peekToken.Type == TOKEN_NUMBER {
+			expression.CharacterSet = ParseCharacterSetWithNumber(p.peekToken.Literal)
+		}
+		p.nextToken()
 	}
 
-	p.nextToken()
 	if p.peekToken.Type == TOKEN_REPEAT {
 		expression.RepeatToken = p.peekToken
 		p.nextToken()

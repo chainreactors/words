@@ -13,9 +13,9 @@ const (
 
 	TOKEN_START  // ?
 	TOKEN_REPEAT // #
-
-	TOKEN_LPAREN // (
-	TOKEN_RPAREN // )
+	TOKEN_SPLIT  // ,
+	TOKEN_LPAREN // {
+	TOKEN_RPAREN // }
 
 	TOKEN_NUMBER     //10 or 10.1
 	TOKEN_IDENTIFIER //identifier
@@ -29,7 +29,7 @@ func (tt TokenType) String() string {
 	case TOKEN_EOF:
 		return "EOF"
 	case TOKEN_START:
-		return "?"
+		return "START"
 	case TOKEN_REPEAT:
 		return "#"
 
@@ -37,7 +37,8 @@ func (tt TokenType) String() string {
 		return "{"
 	case TOKEN_RPAREN:
 		return "}"
-
+	case TOKEN_SPLIT:
+		return "|"
 	case TOKEN_NUMBER:
 		return "NUMBER"
 	case TOKEN_IDENTIFIER:
@@ -89,11 +90,4 @@ func (p Position) Sline() string { //String line
 		msg = fmt.Sprint(" <", p.Filename, ":", p.Line, "> ")
 	}
 	return msg
-}
-
-func LookupIdent(ident string) TokenType {
-	if tok, ok := keywords[ident]; ok {
-		return tok
-	}
-	return TOKEN_IDENTIFIER
 }

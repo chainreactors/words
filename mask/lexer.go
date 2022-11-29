@@ -78,8 +78,6 @@ func (l *Lexer) ReadTokens() []Token {
 	case '{':
 		toks = l.readMask()
 		return toks
-	//case '}':
-	//	tok = newToken(TOKEN_RPAREN, l.ch)
 	case 0:
 		var tok Token
 		tok.Literal = "<EOF>"
@@ -91,7 +89,7 @@ func (l *Lexer) ReadTokens() []Token {
 		if isLetter(l.ch) {
 			tok.Literal = l.readIdentifier(false)
 			tok.Pos = pos
-			tok.Type = LookupIdent(tok.Literal)
+			tok.Type = TOKEN_IDENTIFIER
 			toks = append(toks, tok)
 			return toks
 		} else {
@@ -125,23 +123,27 @@ func (l *Lexer) readMask() []Token {
 	lparenTok := newToken(TOKEN_LPAREN, l.ch, l.getPos())
 	//toks = append(toks, newToken(TOKEN_LPAREN, l.ch, l.getPos()))
 	l.readNext()
-	if l.ch == '?' || l.ch == '$' {
+	if isStart(l.ch) {
 		var toks []Token
 		toks = append(toks, lparenTok)
 		toks = append(toks, newToken(TOKEN_START, l.ch, l.getPos()))
 		l.readNext()
-		if isDigit(l.ch) {
-			toks = append(toks, Token{
-				l.getPos(),
-				TOKEN_NUMBER,
-				l.readIdentifier(true),
-			})
-		} else {
-			toks = append(toks, Token{
-				l.getPos(),
-				TOKEN_IDENTIFIER,
-				l.readIdentifier(true),
-			})
+		for l.ch != '#' && l.ch != '}' {
+			if isDigit(l.ch) {
+				toks = append(toks, Token{
+					l.getPos(),
+					TOKEN_NUMBER,
+					l.readIdentifier(true),
+				})
+			} else if isLetter(l.ch) {
+				toks = append(toks, Token{
+					l.getPos(),
+					TOKEN_IDENTIFIER,
+					l.readIdentifier(true),
+				})
+			} else if isSplit(l.ch) {
+				l.readNext()
+			}
 		}
 
 		if l.ch == '#' {
@@ -202,6 +204,20 @@ func isDigit(ch rune) bool {
 	return '0' <= ch && ch <= '9'
 }
 
+func isSplit(ch rune) bool {
+	if ch == '|' || ch == '-' {
+		return true
+	}
+	return false
+}
+
+func isStart(ch rune) bool {
+	if ch == '?' || ch == '@' || ch == '$' {
+		return true
+	}
+	return false
+}
+
 func isLetter(ch rune) bool {
-	return ch != '{' && ch != 0 && !isDigit(ch)
+	return ch != '{' && ch != 0 && !isDigit(ch) && !isStart(ch) && !isSplit(ch) && ch != '}'
 }

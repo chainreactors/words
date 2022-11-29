@@ -7,7 +7,7 @@ import (
 )
 
 func TestLexer(t *testing.T) {
-	input := "test{?123}"
+	input := "test{@aaa|bbb#3}"
 	fmt.Printf("Input = %s\n", input)
 
 	l := NewLexer(input)
@@ -24,7 +24,7 @@ func TestParser(t *testing.T) {
 	CustomWords = [][]string{
 		[]string{"aaa", "bbb", "ccc"},
 	}
-	input := "test{?123#3}"
+	input := "test{@month}"
 	expected := "test{?a,b,c,d,e,f,g,h,i,j,k,l,m,n,o,p,q,r,s,t,u,v,w,x,y,z,A,B,C,D,E,F,G,H,I,J,K,L,M,N,O,P,Q,R,S,T,U,V,W,X,Y,Z#3}"
 	l := NewLexer(input)
 	p := NewParser(l)

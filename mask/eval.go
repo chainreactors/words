@@ -13,15 +13,6 @@ func Eval(node Node) (val Object) {
 	//	return evalNumber(node)
 	case *MaskExpression:
 		return evalMask(node)
-		//return evalMask(node)
-		//case *ast.PrefixExpression:
-		//	right := Eval(node.Right)
-		//	return evalPrefixExpression(node, right)
-		//case *ast.InfixExpression:
-		//	left := Eval(node.Left)
-		//
-		//	right := Eval(node.Right)
-		//	return evalInfixExpression(node, left, right)
 	}
 
 	return nil
@@ -50,10 +41,6 @@ func evalProgram(program *Program) *GENERATOR {
 	}
 	return results
 }
-
-//func evalNumber(n *ast.NumberLiteral) Object {
-//	return NewNumber(n.Value)
-//}
 
 func evalMask(n *MaskExpression) Object {
 	if n.Start.Literal == "?" {
