@@ -63,7 +63,7 @@ func (l *Lexer) peek() rune {
 func (l *Lexer) NextToken() Token {
 	var tok Token
 	l.skipWhitespace()
-	if l.ch == '#' {
+	if l.ch == '#' && l.functionStart == 0 {
 		l.skipComment()
 	}
 
@@ -96,6 +96,11 @@ func (l *Lexer) NextToken() Token {
 			} else if isTernaryFunc(l.ch) {
 				tok = newToken(TOKEN_FUNCTION, l.ch)
 				l.functionStart = 2
+			} else {
+				tok = Token{
+					Type:    TOKEN_NULL,
+					Literal: "UNKNOWN",
+				}
 			}
 		} else {
 			l.functionStart--
@@ -105,10 +110,7 @@ func (l *Lexer) NextToken() Token {
 				tok.Pos = pos
 				return tok
 			} else if isLetter(l.ch) {
-				tok.Literal = l.readIdentifier()
-				tok.Pos = pos
-				tok.Type = TOKEN_IDENTIFIER
-				return tok
+				tok = newToken(TOKEN_IDENTIFIER, l.ch)
 			}
 		}
 	}

@@ -3,7 +3,6 @@ package rule
 import (
 	"errors"
 	"fmt"
-	"io"
 	"strconv"
 )
 
@@ -11,7 +10,7 @@ import (
 type TokenType int
 
 const (
-	TOKEN_NULL TokenType = iota - 1
+	TOKEN_NULL TokenType = iota
 	TOKEN_IDENTIFIER
 	TOKEN_EOF
 	TOKEN_LINEEOF
@@ -61,7 +60,6 @@ func (t Token) NotNull() bool {
 
 var (
 	NaN = errors.New("Not a number")
-	NaS = errors.New("Not a string")
 	EOF = errors.New("EOF")
 )
 
@@ -80,10 +78,6 @@ type Tokens struct {
 	cur  int
 }
 
-func (t *Tokens) CurToken() Token {
-	return t.toks[t.cur]
-}
-
 func (t *Tokens) NextInt() (int, error) {
 	if t.cur+1 > len(t.toks) {
 		return 0, EOF
@@ -99,14 +93,18 @@ func (t *Tokens) NextInt() (int, error) {
 func (t *Tokens) MustNextInt() int {
 	i, err := t.NextInt()
 	if err != nil {
-		panic(err.Error() + t.CurToken().String())
+		if err == EOF {
+			panic(fmt.Sprintf("%s %s: %s", t.toks[t.cur-1].Literal, err.Error(), t.toks[t.cur-1].String()))
+		} else {
+			panic(fmt.Sprintf("%s %s: %s", t.toks[t.cur].Literal, err.Error(), t.toks[t.cur].String()))
+		}
 	}
 	return i
 }
 
 func (t *Tokens) NextString() (string, error) {
 	if t.cur+1 > len(t.toks) {
-		return "", io.EOF
+		return "", EOF
 	}
 	t.cur++
 	return t.toks[t.cur-1].Literal, nil
@@ -115,7 +113,11 @@ func (t *Tokens) NextString() (string, error) {
 func (t *Tokens) MustNext() string {
 	s, err := t.NextString()
 	if err != nil {
-		panic(err.Error() + t.CurToken().String())
+		if err == EOF {
+			panic(fmt.Sprintf("%s %s: %s", t.toks[t.cur-1].Literal, err.Error(), t.toks[t.cur-1].String()))
+		} else {
+			panic(fmt.Sprintf("%s %s: %s", t.toks[t.cur].Literal, err.Error(), t.toks[t.cur].String()))
+		}
 	}
 	return s
 }

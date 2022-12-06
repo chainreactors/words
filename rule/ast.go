@@ -65,6 +65,7 @@ func (ie *RuleExpression) TokenLiteral() string {
 	var s strings.Builder
 	for _, rule := range ie.Functions {
 		s.WriteString(rule.TokenLiteral())
+		s.WriteString(" ")
 	}
 	return s.String()
 }
@@ -116,6 +117,13 @@ func (ie *FunctionExpression) String() string {
 
 func (ie *FunctionExpression) Tokens() Tokens {
 	return NewTokens(ie.FunctionToken, ie.X, ie.Y)
+}
+
+func (ie *FunctionExpression) IsValid() bool {
+	if ie.FunctionToken.Type == TOKEN_NULL {
+		return false
+	}
+	return true
 }
 
 type NumberLiteral struct {

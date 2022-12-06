@@ -56,10 +56,11 @@ func (p *Parser) parseRuleExpression(tokens []Token) Expression {
 	functionExpr := FunctionExpression{}
 	for _, tok := range tokens {
 		t := tok
-		if tok.Type == TOKEN_SPLIT {
+		if tok.Type == TOKEN_SPLIT || tok.Type == TOKEN_EOF || tok.Type == TOKEN_NULL {
 			expr.Functions = append(expr.Functions, functionExpr)
 			pos = 0
 			functionExpr = FunctionExpression{}
+			continue
 		}
 		if pos == 0 {
 			functionExpr.FunctionToken = t
@@ -70,7 +71,6 @@ func (p *Parser) parseRuleExpression(tokens []Token) Expression {
 		}
 		pos++
 	}
-	expr.Functions = append(expr.Functions, functionExpr)
 	return &expr
 }
 
@@ -116,7 +116,7 @@ func (p *Parser) nextLine() []Token {
 		p.nextToken()
 	}
 	p.nextToken()
-
+	tokens = append(tokens, newToken(TOKEN_EOF, ' '))
 	return tokens
 }
 
