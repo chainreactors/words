@@ -15,9 +15,8 @@ type Parser struct {
 	errors     []string //error messages
 	errorLines []string //for using with wasm communication.
 
-	curToken  Token
-	peekToken Token
-
+	curToken       Token
+	peekToken      Token
 	prefixParseFns map[TokenType]prefixParseFn
 }
 
@@ -37,17 +36,21 @@ func NewParser(l *Lexer) *Parser {
 	return p
 }
 
-func (p *Parser) ParseProgram() *Program {
+func (p *Parser) ParseProgram(filterExpr Expression) *Program {
 	program := &Program{}
 	for p.curToken.Type != TOKEN_EOF {
-		program.Expressions = append(program.Expressions, p.parseExpression())
+		program.Expressions = append(program.Expressions, p.parseExpression(filterExpr.(*RuleExpression)))
 	}
 
 	return program
 }
 
-func (p *Parser) parseExpression() Expression {
-	return p.parseRuleExpression(p.nextLine())
+func (p *Parser) parseExpression(filterExpr *RuleExpression) Expression {
+	expr := p.parseRuleExpression(p.nextLine()).(*RuleExpression)
+	if filterExpr != nil {
+		expr.Functions = append(expr.Functions, filterExpr.Functions...)
+	}
+	return expr
 }
 
 func (p *Parser) parseRuleExpression(tokens []Token) Expression {

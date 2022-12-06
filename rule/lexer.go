@@ -96,6 +96,12 @@ func (l *Lexer) NextToken() Token {
 			} else if isTernaryFunc(l.ch) {
 				tok = newToken(TOKEN_FUNCTION, l.ch)
 				l.functionStart = 2
+			} else if isFilterFunc(l.ch) {
+				tok = newToken(TOKEN_FILTER, l.ch)
+				l.functionStart = 1
+			} else if isTernaryFilterFunc(l.ch) {
+				tok = newToken(TOKEN_FILTER, l.ch)
+				l.functionStart = 2
 			} else {
 				tok = Token{
 					Type:    TOKEN_NULL,
@@ -149,6 +155,21 @@ func (l *Lexer) skipWhitespace() {
 	}
 }
 
+func (l *Lexer) allTokens() []Token {
+	if len(l.input) == 0 {
+		return nil
+	}
+	var tokens []Token
+	for {
+		tok := l.NextToken()
+		tokens = append(tokens, tok)
+		if tok.Type == TOKEN_EOF {
+			break
+		}
+	}
+	return tokens
+}
+
 func (l *Lexer) skipComment() {
 	for l.ch != '\n' && l.ch != 0 {
 		l.readNext()
@@ -174,8 +195,10 @@ func isDigit(ch rune) bool {
 }
 
 var singleFuncTokens = []rune{':', 'l', 'u', 'c', 'C', 't', 'r', 'd', 'f', '{', '}', '[', ']', 'k', 'K', 'E'}
-var doubleFuncTokens = []rune{'T', 'p', '$', '^', 'D', 'O', '\'', '@', 'Z', 'L', 'R', '+', '-', '.', ',', 'y', 'Y', 'e'}
+var unaryFuncTokens = []rune{'T', 'p', '$', '^', 'D', 'O', '\'', '@', 'Z', 'L', 'R', '+', '-', '.', ',', 'y', 'Y', 'e'}
 var ternaryFuncTokens = []rune{'*', 's', 'i', 'o', 'x'}
+var filterFuncTokens = []rune{'>', '<', '_', '!', '/', '(', ')'}
+var ternaryFilterFuncTokens = []rune{'=', '%'}
 
 func isSingleFunc(ch rune) bool {
 	for _, f := range singleFuncTokens {
@@ -187,7 +210,7 @@ func isSingleFunc(ch rune) bool {
 }
 
 func isDoubleFunc(ch rune) bool {
-	for _, f := range doubleFuncTokens {
+	for _, f := range unaryFuncTokens {
 		if f == ch {
 			return true
 		}
@@ -197,6 +220,24 @@ func isDoubleFunc(ch rune) bool {
 
 func isTernaryFunc(ch rune) bool {
 	for _, f := range ternaryFuncTokens {
+		if f == ch {
+			return true
+		}
+	}
+	return false
+}
+
+func isFilterFunc(ch rune) bool {
+	for _, f := range filterFuncTokens {
+		if f == ch {
+			return true
+		}
+	}
+	return false
+}
+
+func isTernaryFilterFunc(ch rune) bool {
+	for _, f := range ternaryFilterFuncTokens {
 		if f == ch {
 			return true
 		}

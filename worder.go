@@ -69,8 +69,8 @@ type Worder struct {
 	Closed   bool
 }
 
-func (word *Worder) CompileRules(rules string) {
-	word.Rules = rule.Compile(rules)
+func (word *Worder) CompileRules(rules string, filter string) {
+	word.Rules = rule.Compile(rules, filter)
 }
 
 func (word *Worder) Run() {

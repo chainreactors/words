@@ -15,6 +15,7 @@ const (
 	TOKEN_EOF
 	TOKEN_LINEEOF
 	TOKEN_FUNCTION
+	TOKEN_FILTER
 	TOKEN_SPLIT
 	TOKEN_NUMBER //10 or 10.1
 )
@@ -34,6 +35,8 @@ func (tt TokenType) String() string {
 		return "FUNCTION"
 	case TOKEN_SPLIT:
 		return "SPILT"
+	case TOKEN_FILTER:
+		return "FILTER"
 	default:
 		return "UNKNOWN"
 	}
