@@ -3,6 +3,7 @@ package words
 import (
 	"bufio"
 	"github.com/chainreactors/words/mask"
+	"github.com/chainreactors/words/rule"
 	"os"
 	"strings"
 )
@@ -23,7 +24,6 @@ func NewWorder(wordlist []string, fns []func(string) string) *Worder {
 		worder.Close()
 	}()
 
-	worder.init()
 	return worder
 }
 
@@ -42,7 +42,6 @@ func NewWorderWithFile(file *os.File, fns []func(string) string) *Worder {
 		worder.Close()
 	}()
 
-	worder.init()
 	return worder
 }
 
@@ -56,7 +55,6 @@ func NewWorderWithDSL(dsl string) *Worder {
 		panic(err)
 	}
 	worder.ch = ch
-	worder.init()
 	return worder
 }
 
@@ -64,13 +62,18 @@ type Worder struct {
 	ch       chan string
 	C        chan string
 	token    int
+	Rules    []rule.Expression
 	wordlist []string
 	scanner  *bufio.Scanner
 	Fns      []func(string) string
 	Closed   bool
 }
 
-func (word *Worder) init() {
+func (word *Worder) CompileRules(rules string) {
+	word.Rules = rule.Compile(rules)
+}
+
+func (word *Worder) Run() {
 	go func() {
 		for w := range word.ch {
 			word.token++
@@ -86,6 +89,23 @@ func (word *Worder) init() {
 	}()
 }
 
+func (word *Worder) RunWithRules() {
+	go func() {
+		for w := range word.ch {
+			word.token++
+			if w == "" {
+				continue
+			}
+			for _, fn := range word.Fns {
+				w = fn(w)
+			}
+			for r := range rule.RunAsStream(word.Rules, w) {
+				word.C <- r
+			}
+		}
+		close(word.C)
+	}()
+}
 func (word *Worder) All() []string {
 	var ws []string
 	for w := range word.C {

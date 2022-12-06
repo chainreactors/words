@@ -15,7 +15,6 @@ func Eval(node Node, word string) []string {
 func evalProgram(program *Program, word string) []string {
 	ss := make([]string, len(program.Expressions))
 	for i, expr := range program.Expressions {
-		fmt.Println(expr.TokenLiteral())
 		ss[i] = evalRuleExpression(expr.(*RuleExpression), word)
 	}
 	return ss
@@ -50,7 +49,39 @@ func evalFunctionExpression(f *FunctionExpression, word string) (string, error) 
 	return ProcessFunction(word, f.Tokens()), nil
 }
 
-func Run(rules, word string) (ss []string, evalErr error) {
+func Run(rules []Expression, word string) (ss []string, evalErr error) {
+	defer func() {
+		if err := recover(); err != nil {
+			evalErr = fmt.Errorf("run error: %v", err)
+		}
+	}()
+	ss = make([]string, len(rules))
+	for i, rule := range rules {
+		ss[i] = evalRuleExpression(rule.(*RuleExpression), word)
+	}
+	return ss, evalErr
+}
+
+func RunSkipError(rules []Expression, word string) []string {
+	ss := make([]string, len(rules))
+	for i, rule := range rules {
+		ss[i] = evalRuleExpressionSkipError(rule.(*RuleExpression), word)
+	}
+	return ss
+}
+
+func RunAsStream(rules []Expression, word string) chan string {
+	ch := make(chan string)
+	go func() {
+		for _, expr := range rules {
+			ch <- evalRuleExpressionSkipError(expr.(*RuleExpression), word)
+		}
+		close(ch)
+	}()
+	return ch
+}
+
+func RunWithString(rules, word string) (ss []string, evalErr error) {
 	defer func() {
 		if err := recover(); err != nil {
 			evalErr = fmt.Errorf("run error: %v", err)
@@ -62,14 +93,8 @@ func Run(rules, word string) (ss []string, evalErr error) {
 	return Eval(programs, word), evalErr
 }
 
-func RunSkipError(rules, word string) []string {
+func Compile(rules string) []Expression {
 	l := NewLexer(rules)
 	p := NewParser(l)
-	programs := p.ParseProgram()
-	ss := make([]string, len(programs.Expressions))
-	for i, expr := range programs.Expressions {
-		fmt.Println(expr.TokenLiteral())
-		ss[i] = evalRuleExpressionSkipError(expr.(*RuleExpression), word)
-	}
-	return ss
+	return p.ParseProgram().Expressions
 }

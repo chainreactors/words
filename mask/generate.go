@@ -94,6 +94,7 @@ func (g *GENERATOR) Stream() chan string {
 			g.Count++
 			ch <- s
 		}
+		close(ch)
 	}()
 	return ch
 }
