@@ -99,8 +99,12 @@ func (word *Worder) RunWithRules() {
 			for _, fn := range word.Fns {
 				w = fn(w)
 			}
-			for r := range rule.RunAsStream(word.Rules, w) {
-				word.C <- r
+			if word.Rules != nil {
+				for r := range rule.RunAsStream(word.Rules, w) {
+					word.C <- r
+				}
+			} else {
+				word.C <- w
 			}
 		}
 		close(word.C)
