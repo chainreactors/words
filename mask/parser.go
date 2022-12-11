@@ -33,12 +33,11 @@ var MetawordMap = map[string]string{
 	"s": Whitespace,
 }
 
-var CustomWords [][]string
 var SpecialWords map[string][]string = map[string][]string{}
 
-func AddCustomWord(s []string) {
-	CustomWords = append(CustomWords, s)
-}
+//func AddCustomWord(s []string) {
+//	CustomWords = append(CustomWords, s)
+//}
 
 func string2Bytes(s string) []string {
 	ss := make([]string, len(s))
@@ -64,11 +63,11 @@ func ParseCharacterSetWithIdent(s string) []string {
 	return cs
 }
 
-func ParseCharacterSetWithNumber(s string) []string {
+func ParseCharacterSetWithNumber(s string, custom [][]string) []string {
 	var cs []string
 	for i := 0; i < len(s); i++ {
-		if len(CustomWords) >= i+1 {
-			cs = append(cs, CustomWords[i]...)
+		if len(custom) >= i+1 {
+			cs = append(cs, custom[i]...)
 		} else {
 			logs.Log.Warnf("index %d out of dicts, not enough dict", i)
 		}
@@ -80,28 +79,12 @@ type (
 	prefixParseFn func() Expression
 )
 
-type Parser struct {
-	l          *Lexer
-	errors     []string //error messages
-	errorLines []string //for using with wasm communication.
-
-	curToken   Token
-	peekToken  Token
-	tokenCache []Token
-	curCache   int
-
-	prefixParseFns map[TokenType]prefixParseFn
-}
-
-func (p *Parser) registerPrefix(tokenType TokenType, fn prefixParseFn) {
-	p.prefixParseFns[tokenType] = fn
-}
-
-func NewParser(l *Lexer) *Parser {
+func NewParser(l *Lexer, params [][]string) *Parser {
 	p := &Parser{
 		l:          l,
 		errors:     []string{},
 		errorLines: []string{},
+		params:     params,
 	}
 
 	p.registerAction()
@@ -109,6 +92,23 @@ func NewParser(l *Lexer) *Parser {
 	p.nextToken()
 	p.nextToken()
 	return p
+}
+
+type Parser struct {
+	l          *Lexer
+	errors     []string //error messages
+	errorLines []string //for using with wasm communication.
+
+	curToken       Token
+	peekToken      Token
+	tokenCache     []Token
+	curCache       int
+	params         [][]string
+	prefixParseFns map[TokenType]prefixParseFn
+}
+
+func (p *Parser) registerPrefix(tokenType TokenType, fn prefixParseFn) {
+	p.prefixParseFns[tokenType] = fn
 }
 
 func (p *Parser) registerAction() {
@@ -151,7 +151,7 @@ func (p *Parser) parseMaskExpression() Expression {
 				expression.CharacterSet = ParseCharacterSetWithIdent(p.peekToken.Literal)
 			}
 		} else if p.peekToken.Type == TOKEN_NUMBER {
-			expression.CharacterSet = ParseCharacterSetWithNumber(p.peekToken.Literal)
+			expression.CharacterSet = ParseCharacterSetWithNumber(p.peekToken.Literal, p.params)
 		}
 		p.nextToken()
 	}

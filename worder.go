@@ -8,7 +8,37 @@ import (
 	"strings"
 )
 
-func NewWorder(wordlist []string, fns []func(string) string) *Worder {
+var CustomWords [][]string
+
+func NewWorder(word string, dicts [][]string, fns []func(string) string) (*Worder, error) {
+	worder := &Worder{
+		token: 0,
+		ch:    make(chan string),
+		C:     make(chan string),
+		Fns:   fns,
+	}
+
+	var err error
+	if dicts != nil {
+		worder.wordlist, err = mask.Run(word, dicts)
+	} else {
+		worder.wordlist, err = mask.Run(word, CustomWords)
+	}
+
+	if err != nil {
+		return nil, err
+	}
+
+	go func() {
+		for _, w := range worder.wordlist {
+			worder.ch <- strings.TrimSpace(w)
+		}
+		worder.Close()
+	}()
+	return worder, nil
+}
+
+func NewWorderWithFns(wordlist []string, fns []func(string) string) *Worder {
 	worder := &Worder{
 		token:    0,
 		wordlist: wordlist,
@@ -45,17 +75,25 @@ func NewWorderWithFile(file *os.File, fns []func(string) string) *Worder {
 	return worder
 }
 
-func NewWorderWithDSL(dsl string) *Worder {
+func NewWorderWithDSL(dsl string, params [][]string) (*Worder, error) {
 	worder := &Worder{
 		token: 0,
 		C:     make(chan string),
 	}
-	ch, err := mask.RunToStream(dsl)
+
+	var ch chan string
+	var err error
+	if params != nil {
+		ch, err = mask.RunToStream(dsl, params)
+	} else {
+		ch, err = mask.RunToStream(dsl, CustomWords)
+	}
+
 	if err != nil {
-		panic(err)
+		return nil, err
 	}
 	worder.ch = ch
-	return worder
+	return worder, nil
 }
 
 type Worder struct {
