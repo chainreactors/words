@@ -2,7 +2,6 @@ package mask
 
 import (
 	"fmt"
-	"github.com/chainreactors/logs"
 	strconv "strconv"
 	"unicode/utf8"
 )
@@ -69,7 +68,7 @@ func ParseCharacterSetWithNumber(s string, custom [][]string) []string {
 		if len(custom) >= i+1 {
 			cs = append(cs, custom[i]...)
 		} else {
-			logs.Log.Warnf("index %d out of dicts, not enough dict", i)
+			fmt.Printf("index %d out of dicts, not enough dict\n", i)
 		}
 	}
 	return cs
