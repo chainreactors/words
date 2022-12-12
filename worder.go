@@ -134,14 +134,18 @@ func (word *Worder) RunWithRules() {
 			if w == "" {
 				continue
 			}
-			for _, fn := range word.Fns {
-				w = fn(w)
-			}
+
 			if word.Rules != nil {
 				for r := range rule.RunAsStream(word.Rules, w) {
+					for _, fn := range word.Fns {
+						r = fn(r)
+					}
 					word.C <- r
 				}
 			} else {
+				for _, fn := range word.Fns {
+					w = fn(w)
+				}
 				word.C <- w
 			}
 		}
