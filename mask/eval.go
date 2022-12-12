@@ -2,7 +2,6 @@ package mask
 
 import (
 	"fmt"
-	"github.com/chainreactors/logs"
 )
 
 func Eval(node Node) (val Object) {
@@ -34,9 +33,6 @@ func evalProgram(program *Program) *GENERATOR {
 		}
 	}
 
-	if results == nil {
-		return nil
-	}
 	return results
 }
 
@@ -54,7 +50,7 @@ func Run(code string, params [][]string) ([]string, error) {
 	program := p.ParseProgram()
 	if len(p.Errors()) != 0 {
 		for _, err := range p.Errors() {
-			logs.Log.Error(err)
+			fmt.Println(err)
 		}
 		return nil, fmt.Errorf("compile error")
 	}
@@ -68,7 +64,7 @@ func RunToStream(code string, params [][]string) (chan string, error) {
 	program := p.ParseProgram()
 	if len(p.Errors()) != 0 {
 		for _, err := range p.Errors() {
-			logs.Log.Error(err)
+			fmt.Println(err)
 		}
 		return nil, fmt.Errorf("compile error")
 	}
