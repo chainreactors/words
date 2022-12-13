@@ -146,7 +146,7 @@ func (p *Parser) parseMaskExpression() Expression {
 		if p.peekToken.Type == TOKEN_IDENTIFIER {
 			if expression.Start.Literal == "@" {
 				expression.CharacterSet = append(expression.CharacterSet, ParseCharacterSetWithSpecial(p.peekToken.Literal)...)
-			} else if expression.Start.Literal == "?" {
+			} else {
 				expression.CharacterSet = ParseCharacterSetWithIdent(p.peekToken.Literal)
 			}
 		} else if p.peekToken.Type == TOKEN_NUMBER {

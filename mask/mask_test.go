@@ -21,13 +21,13 @@ func TestLexer(t *testing.T) {
 }
 
 func TestParser(t *testing.T) {
-	CustomWords = [][]string{
+	dicts := [][]string{
 		[]string{"aaa", "bbb", "ccc"},
 	}
 	input := "test{@month}"
 	expected := "test{?a,b,c,d,e,f,g,h,i,j,k,l,m,n,o,p,q,r,s,t,u,v,w,x,y,z,A,B,C,D,E,F,G,H,I,J,K,L,M,N,O,P,Q,R,S,T,U,V,W,X,Y,Z#3}"
 	l := NewLexer(input)
-	p := NewParser(l)
+	p := NewParser(l, dicts)
 	program := p.ParseProgram()
 	if len(p.Errors()) != 0 {
 		for _, err := range p.Errors() {
@@ -61,12 +61,12 @@ func TestEval(t *testing.T) {
 		//{"2 + 2 ** 2 ** 3", "258"},
 		//{"10", "10"},
 	}
-	CustomWords = [][]string{
+	dicts := [][]string{
 		[]string{"aaa", "bbb", "ccc"},
 	}
 	for _, tt := range tests {
 		l := NewLexer(tt.input)
-		p := NewParser(l)
+		p := NewParser(l, dicts)
 		program := p.ParseProgram()
 		if len(p.Errors()) != 0 {
 			for _, err := range p.Errors() {
@@ -87,7 +87,7 @@ func TestEval(t *testing.T) {
 }
 
 func TestRun(t *testing.T) {
-	words, err := Run("{$l#2}.oocl.com")
+	words, err := Run("{$l#2}.oocl.com", nil)
 	fmt.Printf("%v,%v", words, err)
 }
 
