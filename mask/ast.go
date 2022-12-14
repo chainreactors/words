@@ -58,15 +58,13 @@ func (p *Program) String() string {
 type MaskExpression struct {
 	Start        Token
 	CharacterSet []string
-	RepeatToken  Token
 	Repeat       int
+	endPos       Position
 }
 
 func (ie *MaskExpression) Pos() Position { return ie.Start.Pos }
 func (ie *MaskExpression) End() Position {
-	pos := ie.RepeatToken.Pos
-	pos.Offset = pos.Offset + len(strconv.Itoa(int(ie.Repeat)))
-	return pos
+	return ie.endPos
 }
 
 func (ie *MaskExpression) expressionNode()      {}

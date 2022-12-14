@@ -89,7 +89,7 @@ func TestEval(t *testing.T) {
 
 func TestRun(t *testing.T) {
 	var err error
-	words, err := Run("{$l#2}.oocl.com", nil)
+	words, err := Run("/{?l}", nil)
 	fmt.Printf("%v,%v", words, err)
 	stream, err := RunToStream("{$l#2}.oocl.com", nil)
 	for w := range stream {

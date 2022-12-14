@@ -156,17 +156,22 @@ func (p *Parser) parseMaskExpression() Expression {
 	}
 
 	if p.peekToken.Type == TOKEN_REPEAT {
-		expression.RepeatToken = p.peekToken
 		p.nextToken()
 		if p.peekToken.Type == TOKEN_NUMBER {
 			expression.Repeat, _ = strconv.Atoi(p.peekToken.Literal)
+		} else {
+			expression.Repeat = 1
 		}
 		p.nextToken()
+	} else {
+
+		expression.Repeat = 1
 	}
 
 	if !p.expectPeek(TOKEN_RPAREN) {
 		return nil
 	}
+	expression.endPos = p.peekToken.Pos
 	return expression
 }
 
