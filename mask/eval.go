@@ -55,7 +55,7 @@ func Run(code string, params [][]string) ([]string, error) {
 		return nil, fmt.Errorf("compile error")
 	}
 
-	return Eval(program).(*GENERATOR).Strings, nil
+	return Eval(program).(*GENERATOR).All(), nil
 }
 
 func RunToStream(code string, params [][]string) (chan string, error) {
@@ -69,5 +69,5 @@ func RunToStream(code string, params [][]string) (chan string, error) {
 		return nil, fmt.Errorf("compile error")
 	}
 
-	return Eval(program).(*GENERATOR).Stream(), nil
+	return Eval(program).(*GENERATOR).Steamer, nil
 }

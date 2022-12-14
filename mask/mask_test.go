@@ -87,11 +87,42 @@ func TestEval(t *testing.T) {
 }
 
 func TestRun(t *testing.T) {
+	var err error
 	words, err := Run("{$l#2}.oocl.com", nil)
 	fmt.Printf("%v,%v", words, err)
+	stream, err := RunToStream("{$l#2}.oocl.com", nil)
+	for w := range stream {
+		fmt.Println(w)
+	}
+}
+
+func TestProduct(t *testing.T) {
+	words := Product(wrapSteam([]string{"a", "b", "c", "d"}), []string{"a", "b", "c", "d"})
+	for w := range words {
+		fmt.Println(w)
+	}
 }
 
 func TestGenerator(t *testing.T) {
-	gen := NewGenerator([]string{"a", "b", "c", "d"}, 3, false)
-	fmt.Printf("%v", gen.Strings)
+	gen := NewGenerator([]string{"a", "b", "c", "d"}, 4, true)
+	for s := range gen.Steamer {
+		fmt.Println(s)
+	}
+}
+
+func TestNewGeneratorSingle(t *testing.T) {
+	gen := NewGeneratorSingle("a")
+	for s := range gen.Steamer {
+		fmt.Println(s)
+	}
+}
+
+func TestCross(t *testing.T) {
+	gen1 := NewGenerator([]string{"a", "b", "c", "d"}, 2, true)
+	//gen2 := NewGenerator([]string{"eee", "fff"}, 2, true)
+	gen3 := NewGeneratorSingle("z")
+	gen1.Cross(gen3)
+	for w := range gen1.Steamer {
+		fmt.Println(w)
+	}
 }

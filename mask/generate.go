@@ -4,20 +4,31 @@ import "strings"
 
 func NewGenerator(characterSet []string, repeat int, greedy bool) *GENERATOR {
 	length := len(characterSet)
-	maxCount := length
-
-	for i := 1; i < repeat; i++ {
-		maxCount = maxCount * length
+	var maxCount int
+	tmp := make([]int, repeat+1)
+	tmp[0] = 1
+	for i := 1; i <= repeat; i++ {
+		tmp[i] = tmp[i-1] * length
+		if greedy {
+			maxCount += tmp[i]
+		} else {
+			maxCount = tmp[i]
+		}
 	}
 
 	gen := &GENERATOR{
 		characterSet: characterSet,
 		maxRepeat:    repeat,
 		MaxCount:     maxCount,
+		Steamer:      make(chan string),
 		greedy:       greedy,
 	}
 
-	gen.Product()
+	if gen.greedy {
+		gen.Steamer = gen.GreedyProduct()
+	} else {
+		gen.Steamer = gen.Product()
+	}
 	return gen
 }
 
@@ -25,9 +36,8 @@ func NewGeneratorSingle(s string) *GENERATOR {
 	gen := &GENERATOR{
 		characterSet: []string{s},
 		MaxCount:     1,
-		Strings:      []string{s},
 	}
-
+	gen.Steamer = gen.Product()
 	return gen
 }
 
@@ -35,66 +45,109 @@ type GENERATOR struct {
 	close        bool
 	greedy       bool
 	characterSet []string
-	Strings      []string
+	Steamer      chan string
 	Count        int
 	MaxCount     int
 	maxRepeat    int
 }
 
-func Product(a, b []string) []string {
-	ss := make([]string, len(a)*len(b))
-	sum := 0
-	for _, i := range a {
-		for _, j := range b {
-			ss[sum] = i + j
-			sum++
+func Product(a chan string, b []string) chan string {
+	ch := make(chan string)
+	go func() {
+		for i := range a {
+			b := wrapSteam(b)
+			for j := range b {
+				ch <- i + j
+			}
 		}
-	}
-	return ss
+		close(ch)
+	}()
+	return ch
 }
 
-func (g *GENERATOR) repeat(ss []string, cur int) []string {
-	if g.maxRepeat == 1 {
-		return g.characterSet
+func ProductGenerator(a chan string, b *GENERATOR) chan string {
+	ch := make(chan string)
+	go func() {
+		for i := range a {
+			for j := range b.Steamer {
+				ch <- i + j
+			}
+			b.Reset()
+		}
+		close(ch)
+	}()
+	return ch
+}
+
+func wrapSteam(s []string) chan string {
+	ch := make(chan string)
+	go func() {
+		for _, i := range s {
+			ch <- i
+		}
+		close(ch)
+	}()
+	return ch
+}
+
+func (g *GENERATOR) repeat(ss chan string, cur, max int) chan string {
+	if max == 1 {
+		return ss
 	}
 
-	if cur < g.maxRepeat {
-		if g.greedy {
-			g.Strings = append(g.Strings, ss...)
-		}
-		return g.repeat(Product(ss, g.characterSet), cur+1)
-	} else {
-		g.Strings = append(g.Strings, ss...)
+	if cur < max {
+		return g.repeat(Product(ss, g.characterSet), cur+1, max)
 	}
 	return ss
 }
 
 func (g *GENERATOR) Inspect() string {
-	return strings.Join(g.Strings, "\n")
+	return strings.Join(g.All(), "\n")
 }
 
 func (g *GENERATOR) Type() ObjectType { return GENERATOR_OBJ }
 
-func (g *GENERATOR) Product() []string {
-	return g.repeat(g.characterSet, 1)
+func (g *GENERATOR) Product() chan string {
+	return g.repeat(wrapSteam(g.characterSet), 1, g.maxRepeat)
 }
 
-func (g *GENERATOR) Cross(other *GENERATOR) {
-	g.Strings = Product(g.Strings, other.Strings)
-}
-
-func (g *GENERATOR) CrossString(ss []string) []string {
-	return Product(g.Strings, ss)
-}
-
-func (g *GENERATOR) Stream() chan string {
+func (g *GENERATOR) GreedyProduct() chan string {
 	ch := make(chan string)
 	go func() {
-		for _, s := range g.Strings {
-			g.Count++
-			ch <- s
+		for i := 1; i <= g.maxRepeat; i++ {
+			for s := range g.repeat(wrapSteam(g.characterSet), 1, i) {
+				ch <- s
+			}
 		}
 		close(ch)
 	}()
 	return ch
+}
+
+func (g *GENERATOR) Cross(other *GENERATOR) {
+	g.MaxCount = g.MaxCount * other.MaxCount
+	g.Steamer = ProductGenerator(g.Steamer, other)
+}
+
+func (g *GENERATOR) CrossString(ss []string) {
+	g.MaxCount = g.MaxCount * len(ss)
+	g.Steamer = Product(g.Steamer, ss)
+}
+
+func (g *GENERATOR) Reset() {
+	if g.greedy {
+		g.Steamer = g.GreedyProduct()
+	} else {
+		g.Steamer = g.Product()
+	}
+}
+
+func (g *GENERATOR) All() []string {
+	ss := make([]string, g.MaxCount)
+	i := 0
+	for s := range g.Steamer {
+		ss[i] = s
+		i++
+	}
+	return ss
 }
