@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 	"testing"
+	"time"
 )
 
 func TestLexer(t *testing.T) {
@@ -104,10 +105,16 @@ func TestProduct(t *testing.T) {
 }
 
 func TestGenerator(t *testing.T) {
-	gen := NewGenerator([]string{"a", "b", "c", "d"}, 4, true)
+	start := time.Now()
+	gen := NewGenerator(ParseCharacterSetWithIdent("l"), 5, false)
 	for s := range gen.Steamer {
-		fmt.Println(s)
+		s = s
+		continue
 	}
+	println(time.Since(start).String())
+	//for s := range gen.Steamer {
+	//	fmt.Println(s)
+	//}
 }
 
 func TestNewGeneratorSingle(t *testing.T) {

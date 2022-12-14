@@ -19,10 +19,11 @@ func NewWorder(word string, dicts [][]string, fns []func(string) string) (*Worde
 	}
 
 	var err error
+	var input chan string
 	if dicts != nil {
-		worder.wordlist, err = mask.Run(word, dicts)
+		input, err = mask.RunToStream(word, dicts)
 	} else {
-		worder.wordlist, err = mask.Run(word, CustomWords)
+		input, err = mask.RunToStream(word, CustomWords)
 	}
 
 	if err != nil {
@@ -30,7 +31,7 @@ func NewWorder(word string, dicts [][]string, fns []func(string) string) (*Worde
 	}
 
 	go func() {
-		for _, w := range worder.wordlist {
+		for w := range input {
 			worder.ch <- strings.TrimSpace(w)
 		}
 		worder.Close()
@@ -40,15 +41,14 @@ func NewWorder(word string, dicts [][]string, fns []func(string) string) (*Worde
 
 func NewWorderWithFns(wordlist []string, fns []func(string) string) *Worder {
 	worder := &Worder{
-		token:    0,
-		wordlist: wordlist,
-		ch:       make(chan string),
-		C:        make(chan string),
-		Fns:      fns,
+		token: 0,
+		ch:    make(chan string),
+		C:     make(chan string),
+		Fns:   fns,
 	}
 
 	go func() {
-		for _, w := range worder.wordlist {
+		for _, w := range wordlist {
 			worder.ch <- strings.TrimSpace(w)
 		}
 		worder.Close()
@@ -97,14 +97,13 @@ func NewWorderWithDSL(dsl string, params [][]string) (*Worder, error) {
 }
 
 type Worder struct {
-	ch       chan string
-	C        chan string
-	token    int
-	Rules    []rule.Expression
-	wordlist []string
-	scanner  *bufio.Scanner
-	Fns      []func(string) string
-	Closed   bool
+	ch      chan string
+	C       chan string
+	token   int
+	Rules   []rule.Expression
+	scanner *bufio.Scanner
+	Fns     []func(string) string
+	Closed  bool
 }
 
 func (word *Worder) CompileRules(rules string, filter string) {
