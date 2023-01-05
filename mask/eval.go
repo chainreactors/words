@@ -44,9 +44,9 @@ func evalMask(n *MaskExpression) Object {
 	}
 }
 
-func Run(code string, params [][]string) ([]string, error) {
+func Run(code string, params [][]string, keywords map[string][]string) ([]string, error) {
 	l := NewLexer(code)
-	p := NewParser(l, params)
+	p := NewParser(l, params, keywords)
 	program := p.ParseProgram()
 	if len(p.Errors()) != 0 {
 		for _, err := range p.Errors() {
@@ -58,9 +58,9 @@ func Run(code string, params [][]string) ([]string, error) {
 	return Eval(program).(*GENERATOR).All(), nil
 }
 
-func RunToStream(code string, params [][]string) (chan string, error) {
+func RunToStream(code string, params [][]string, keywords map[string][]string) (chan string, error) {
 	l := NewLexer(code)
-	p := NewParser(l, params)
+	p := NewParser(l, params, keywords)
 	program := p.ParseProgram()
 	if len(p.Errors()) != 0 {
 		for _, err := range p.Errors() {

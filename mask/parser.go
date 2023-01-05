@@ -46,8 +46,8 @@ func string2Bytes(s string) []string {
 	return ss
 }
 
-func ParseCharacterSetWithSpecial(s string) []string {
-	if ss, ok := SpecialWords[s]; ok {
+func ParseCharacterSetWithSpecial(s string, keywords map[string][]string) []string {
+	if ss, ok := keywords[s]; ok {
 		return ss
 	} else {
 		return nil
@@ -78,14 +78,17 @@ type (
 	prefixParseFn func() Expression
 )
 
-func NewParser(l *Lexer, params [][]string) *Parser {
+func NewParser(l *Lexer, params [][]string, keywords map[string][]string) *Parser {
 	p := &Parser{
 		l:          l,
 		errors:     []string{},
 		errorLines: []string{},
 		params:     params,
+		keywords:   keywords,
 	}
-
+	if p.keywords == nil {
+		p.keywords = SpecialWords
+	}
 	p.registerAction()
 
 	p.nextToken()
@@ -103,6 +106,7 @@ type Parser struct {
 	tokenCache     []Token
 	curCache       int
 	params         [][]string
+	keywords       map[string][]string
 	prefixParseFns map[TokenType]prefixParseFn
 }
 
@@ -140,12 +144,11 @@ func (p *Parser) parseExpression() Expression {
 
 func (p *Parser) parseMaskExpression() Expression {
 	expression := &MaskExpression{Start: p.peekToken}
-
 	p.nextToken()
 	for p.peekToken.Type != TOKEN_REPEAT && p.peekToken.Type != TOKEN_RPAREN {
 		if p.peekToken.Type == TOKEN_IDENTIFIER {
 			if expression.Start.Literal == "@" {
-				expression.CharacterSet = append(expression.CharacterSet, ParseCharacterSetWithSpecial(p.peekToken.Literal)...)
+				expression.CharacterSet = append(expression.CharacterSet, ParseCharacterSetWithSpecial(p.peekToken.Literal, p.keywords)...)
 			} else {
 				expression.CharacterSet = ParseCharacterSetWithIdent(p.peekToken.Literal)
 			}
