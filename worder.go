@@ -10,60 +10,34 @@ import (
 
 var CustomWords [][]string
 
-func NewWorder(word string, dicts [][]string, fns []func(string) string) (*Worder, error) {
+func NewWorder(word string, params [][]string, keywords map[string][]string) (*Worder, error) {
 	worder := &Worder{
 		token: 0,
 		ch:    make(chan string),
 		C:     make(chan string),
-		Fns:   fns,
 	}
 
 	var err error
 	var input chan string
-	if dicts != nil {
-		input, err = mask.RunToStream(word, dicts)
+	if params != nil {
+		input, err = mask.RunToStream(word, params, keywords)
 	} else {
-		input, err = mask.RunToStream(word, CustomWords)
+		input, err = mask.RunToStream(word, CustomWords, keywords)
 	}
-
 	if err != nil {
 		return nil, err
 	}
 
-	go func() {
-		for w := range input {
-			worder.ch <- strings.TrimSpace(w)
-		}
-		worder.Close()
-	}()
+	worder.ch = input
 	return worder, nil
 }
 
-func NewWorderWithFns(wordlist []string, fns []func(string) string) *Worder {
-	worder := &Worder{
-		token: 0,
-		ch:    make(chan string),
-		C:     make(chan string),
-		Fns:   fns,
-	}
-
-	go func() {
-		for _, w := range wordlist {
-			worder.ch <- strings.TrimSpace(w)
-		}
-		worder.Close()
-	}()
-
-	return worder
-}
-
-func NewWorderWithFile(file *os.File, fns []func(string) string) *Worder {
+func NewWorderWithFile(file *os.File) *Worder {
 	worder := &Worder{
 		token:   0,
 		scanner: bufio.NewScanner(file),
 		ch:      make(chan string),
 		C:       make(chan string),
-		Fns:     fns,
 	}
 	go func() {
 		for worder.scanner.Scan() {
@@ -73,27 +47,6 @@ func NewWorderWithFile(file *os.File, fns []func(string) string) *Worder {
 	}()
 
 	return worder
-}
-
-func NewWorderWithDSL(dsl string, params [][]string) (*Worder, error) {
-	worder := &Worder{
-		token: 0,
-		C:     make(chan string),
-	}
-
-	var ch chan string
-	var err error
-	if params != nil {
-		ch, err = mask.RunToStream(dsl, params)
-	} else {
-		ch, err = mask.RunToStream(dsl, CustomWords)
-	}
-
-	if err != nil {
-		return nil, err
-	}
-	worder.ch = ch
-	return worder, nil
 }
 
 type Worder struct {
@@ -157,6 +110,7 @@ func (word *Worder) RunWithRules() {
 		close(word.C)
 	}()
 }
+
 func (word *Worder) All() []string {
 	var ws []string
 	for w := range word.C {
