@@ -36,10 +36,10 @@ func NewParser(l *Lexer) *Parser {
 	return p
 }
 
-func (p *Parser) ParseProgram(filterExpr Expression) *Program {
+func (p *Parser) ParseProgram(filterExpr *RuleExpression) *Program {
 	program := &Program{}
 	for p.curToken.Type != TOKEN_EOF {
-		program.Expressions = append(program.Expressions, p.parseExpression(filterExpr.(*RuleExpression)))
+		program.Expressions = append(program.Expressions, p.parseExpression(filterExpr))
 	}
 
 	return program

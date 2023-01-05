@@ -2,15 +2,13 @@ package rule
 
 import "fmt"
 
-//func Eval(node Node, word string) []string {
-//	switch n := node.(type) {
-//	case *Program:
-//		return evalProgram(n, word)
-//	case *RuleExpression:
-//		return []string{evalRuleExpression(n, word)}
-//	}
-//	return nil
-//}
+func Eval(node Node, word string) []string {
+	switch n := node.(type) {
+	case *Program:
+		return evalProgram(n, word)
+	}
+	return nil
+}
 
 func evalProgram(program *Program, word string) []string {
 	ss := make([]string, len(program.Expressions))
@@ -106,9 +104,14 @@ func RunWithString(rules, word string) (ss []string, evalErr error) {
 	return evalProgram(programs, word), evalErr
 }
 
-func Compile(rules string, filter string) []Expression {
+func Compile(rules string, filter string) *Program {
 	l := NewLexer(rules)
 	p := NewParser(l)
-	programs := p.ParseProgram(p.parseRuleExpression(NewLexer(filter).allTokens()))
-	return programs.Expressions
+	var programs *Program
+	if filter != "" {
+		programs = p.ParseProgram(p.parseRuleExpression(NewLexer(filter).allTokens()).(*RuleExpression))
+	} else {
+		programs = p.ParseProgram(nil)
+	}
+	return programs
 }

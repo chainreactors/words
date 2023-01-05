@@ -107,7 +107,7 @@ type Worder struct {
 }
 
 func (word *Worder) CompileRules(rules string, filter string) {
-	word.Rules = rule.Compile(rules, filter)
+	word.Rules = rule.Compile(rules, filter).Expressions
 }
 
 func (word *Worder) Run() {
@@ -139,11 +139,17 @@ func (word *Worder) RunWithRules() {
 					for _, fn := range word.Fns {
 						r = fn(r)
 					}
+					if r == "" {
+						continue
+					}
 					word.C <- r
 				}
 			} else {
 				for _, fn := range word.Fns {
 					w = fn(w)
+				}
+				if w == "" {
+					continue
 				}
 				word.C <- w
 			}
