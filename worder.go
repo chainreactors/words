@@ -10,7 +10,7 @@ import (
 
 var CustomWords [][]string
 
-func NewWorder(list []string) {
+func NewWorder(list []string) *Worder {
 	worder := &Worder{
 		token: 0,
 		ch:    make(chan string),
@@ -22,7 +22,7 @@ func NewWorder(list []string) {
 		}
 		close(worder.ch)
 	}()
-
+	return worder
 }
 func NewWorderWithDsl(word string, params [][]string, keywords map[string][]string) (*Worder, error) {
 	worder := &Worder{
