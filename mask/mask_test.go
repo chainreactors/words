@@ -28,7 +28,7 @@ func TestParser(t *testing.T) {
 	input := "test{@month}"
 	expected := "test{?a,b,c,d,e,f,g,h,i,j,k,l,m,n,o,p,q,r,s,t,u,v,w,x,y,z,A,B,C,D,E,F,G,H,I,J,K,L,M,N,O,P,Q,R,S,T,U,V,W,X,Y,Z#3}"
 	l := NewLexer(input)
-	p := NewParser(l, dicts)
+	p := NewParser(l, dicts, nil)
 	program := p.ParseProgram()
 	if len(p.Errors()) != 0 {
 		for _, err := range p.Errors() {
@@ -67,7 +67,7 @@ func TestEval(t *testing.T) {
 	}
 	for _, tt := range tests {
 		l := NewLexer(tt.input)
-		p := NewParser(l, dicts)
+		p := NewParser(l, dicts, nil)
 		program := p.ParseProgram()
 		if len(p.Errors()) != 0 {
 			for _, err := range p.Errors() {
@@ -89,9 +89,10 @@ func TestEval(t *testing.T) {
 
 func TestRun(t *testing.T) {
 	var err error
-	words, err := Run("/{?l}", nil)
+	words, err := Run("/{?l}", nil, nil)
 	fmt.Printf("%v,%v", words, err)
-	stream, err := RunToStream("{$l#2}.oocl.com", nil)
+	keywords := map[string][]string{"test": []string{"a", "b", "c", "d"}}
+	stream, err := RunToStream("{$l#2}.oocl.com{@test}", nil, keywords)
 	for w := range stream {
 		fmt.Println(w)
 	}
