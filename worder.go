@@ -10,7 +10,21 @@ import (
 
 var CustomWords [][]string
 
-func NewWorder(word string, params [][]string, keywords map[string][]string) (*Worder, error) {
+func NewWorder(list []string) {
+	worder := &Worder{
+		token: 0,
+		ch:    make(chan string),
+		C:     make(chan string),
+	}
+	go func() {
+		for _, l := range list {
+			worder.ch <- l
+		}
+		close(worder.ch)
+	}()
+
+}
+func NewWorderWithDsl(word string, params [][]string, keywords map[string][]string) (*Worder, error) {
 	worder := &Worder{
 		token: 0,
 		ch:    make(chan string),
@@ -43,7 +57,7 @@ func NewWorderWithFile(file *os.File) *Worder {
 		for worder.scanner.Scan() {
 			worder.ch <- strings.TrimSpace(worder.scanner.Text())
 		}
-		worder.Close()
+		close(worder.ch)
 	}()
 
 	return worder
@@ -76,6 +90,7 @@ func (word *Worder) Run() {
 			word.C <- w
 		}
 		close(word.C)
+		word.Closed = true
 	}()
 }
 
@@ -108,6 +123,7 @@ func (word *Worder) RunWithRules() {
 			}
 		}
 		close(word.C)
+		word.Closed = true
 	}()
 }
 
@@ -117,9 +133,4 @@ func (word *Worder) All() []string {
 		ws = append(ws, w)
 	}
 	return ws
-}
-
-func (word *Worder) Close() {
-	word.Closed = true
-	close(word.ch)
 }
