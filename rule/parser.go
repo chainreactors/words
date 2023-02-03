@@ -114,10 +114,21 @@ func (p *Parser) nextToken() {
 
 func (p *Parser) nextLine() []Token {
 	var tokens []Token
-	for p.curToken.Type != TOKEN_LINEEOF && p.curToken.Type != TOKEN_EOF {
-		tokens = append(tokens, p.curToken)
+	for p.curToken.Type == TOKEN_LINEEOF {
 		p.nextToken()
 	}
+
+	for p.curToken.Type != TOKEN_LINEEOF && p.curToken.Type != TOKEN_EOF {
+		if p.curToken.Type == TOKEN_SPLIT && p.peekToken.Type != TOKEN_FUNCTION {
+
+		} else {
+			tokens = append(tokens, p.curToken)
+		}
+
+		p.nextToken()
+	}
+
+	// 跳过换行符
 	p.nextToken()
 	tokens = append(tokens, newToken(TOKEN_EOF, ' '))
 	return tokens

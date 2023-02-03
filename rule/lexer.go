@@ -6,14 +6,14 @@ import (
 
 // Lexer
 type Lexer struct {
-	filename      string
-	input         []rune
-	ch            rune //current character
-	position      int  //character offset
-	readPosition  int  //reading offset
-	functionStart int
-	line          int
-	col           int
+	filename     string
+	input        []rune
+	ch           rune //current character
+	position     int  //character offset
+	readPosition int  //reading offset
+	statusToken  int
+	line         int
+	col          int
 }
 
 func NewLexer(input string) *Lexer {
@@ -63,10 +63,9 @@ func (l *Lexer) peek() rune {
 func (l *Lexer) NextToken() Token {
 	var tok Token
 	l.skipWhitespace()
-	if l.ch == '#' && l.functionStart == 0 {
+	if l.ch == '#' && l.statusToken == 0 {
 		l.skipComment()
 	}
-
 	pos := l.getPos()
 
 	switch l.ch {
@@ -74,42 +73,43 @@ func (l *Lexer) NextToken() Token {
 		tok.Literal = "<EOF>"
 		tok.Type = TOKEN_EOF
 	case '\n':
+		for l.peek() == '\n' {
+			l.readNext()
+		}
 		tok = newToken(TOKEN_LINEEOF, l.ch)
 		tok.Literal = "\\n"
-		l.functionStart = 0
+		l.statusToken = 0
 	case ' ':
 		tok = newToken(TOKEN_SPLIT, l.ch)
 		tok.Pos = pos
-		for l.ch != ' ' {
-			l.readNext()
-		}
-		l.functionStart = 0
-		l.readNext()
+		l.skipSpace()
+		l.statusToken = 0
 		return tok
 	default:
-		if l.functionStart == 0 {
+		if l.statusToken == 0 {
 			if isSingleFunc(l.ch) {
 				tok = newToken(TOKEN_FUNCTION, l.ch)
 			} else if isDoubleFunc(l.ch) {
 				tok = newToken(TOKEN_FUNCTION, l.ch)
-				l.functionStart = 1
+				l.statusToken = 1
 			} else if isTernaryFunc(l.ch) {
 				tok = newToken(TOKEN_FUNCTION, l.ch)
-				l.functionStart = 2
+				l.statusToken = 2
 			} else if isFilterFunc(l.ch) {
 				tok = newToken(TOKEN_FILTER, l.ch)
-				l.functionStart = 1
+				l.statusToken = 1
 			} else if isTernaryFilterFunc(l.ch) {
 				tok = newToken(TOKEN_FILTER, l.ch)
-				l.functionStart = 2
+				l.statusToken = 2
 			} else {
 				tok = Token{
 					Type:    TOKEN_NULL,
-					Literal: "UNKNOWN",
+					Literal: string(l.ch),
 				}
 			}
 		} else {
-			l.functionStart--
+			l.skipSpace()
+			l.statusToken--
 			if isDigit(l.ch) {
 				tok.Literal = l.readNumber()
 				tok.Type = TOKEN_NUMBER
@@ -155,6 +155,18 @@ func (l *Lexer) skipWhitespace() {
 	}
 }
 
+func (l *Lexer) skipComment() {
+	for l.ch != '\n' && l.ch != 0 {
+		l.readNext()
+	}
+}
+
+func (l *Lexer) skipSpace() {
+	for l.ch == ' ' {
+		l.readNext()
+	}
+}
+
 func (l *Lexer) allTokens() []Token {
 	if len(l.input) == 0 {
 		return nil
@@ -168,13 +180,6 @@ func (l *Lexer) allTokens() []Token {
 		}
 	}
 	return tokens
-}
-
-func (l *Lexer) skipComment() {
-	for l.ch != '\n' && l.ch != 0 {
-		l.readNext()
-	}
-	l.readNext()
 }
 
 func (l *Lexer) getPos() Position {
