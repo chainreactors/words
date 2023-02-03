@@ -66,6 +66,9 @@ func (l *Lexer) NextToken() Token {
 	if l.ch == '#' && l.statusToken == 0 {
 		l.skipComment()
 	}
+	if l.statusToken != 0 {
+		l.skipSpace()
+	}
 	pos := l.getPos()
 
 	switch l.ch {
@@ -108,7 +111,6 @@ func (l *Lexer) NextToken() Token {
 				}
 			}
 		} else {
-			l.skipSpace()
 			l.statusToken--
 			if isDigit(l.ch) {
 				tok.Literal = l.readNumber()
