@@ -25,14 +25,14 @@ func NewWorder(list []string) *Worder {
 	return worder
 }
 
-func NewWorderWithChan(chan string) *Worder {
+func NewWorderWithChan(ch chan string) *Worder {
 	worder := &Worder{
 		token: 0,
 		ch:    make(chan string),
 		C:     make(chan string),
 	}
 	go func() {
-		for w := range worder.ch {
+		for w := range ch {
 			worder.ch <- w
 		}
 		close(worder.ch)
