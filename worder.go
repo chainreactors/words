@@ -89,7 +89,7 @@ type Worder struct {
 	Closed  bool
 }
 
-func (word *Worder) CompileRules(rules string, filter string) {
+func (word *Worder) SetRules(rules string, filter string) {
 	word.Rules = rule.Compile(rules, filter).Expressions
 }
 
@@ -100,24 +100,6 @@ func (word *Worder) Run() {
 			if w == "" {
 				continue
 			}
-			for _, fn := range word.Fns {
-				w = fn(w)
-			}
-			word.C <- w
-		}
-		close(word.C)
-		word.Closed = true
-	}()
-}
-
-func (word *Worder) RunWithRules() {
-	go func() {
-		for w := range word.ch {
-			word.token++
-			if w == "" {
-				continue
-			}
-
 			if word.Rules != nil {
 				for r := range rule.RunAsStream(word.Rules, w) {
 					for _, fn := range word.Fns {
@@ -131,11 +113,8 @@ func (word *Worder) RunWithRules() {
 			} else {
 				for _, fn := range word.Fns {
 					w = fn(w)
+					word.C <- w
 				}
-				if w == "" {
-					continue
-				}
-				word.C <- w
 			}
 		}
 		close(word.C)
