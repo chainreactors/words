@@ -1,10 +1,22 @@
+# Created by .ignore support plugin (hsz.mobi)
+### Example user template template
+### Example user template
+
+# IntelliJ project files
+.idea/
+*.iml
+out
+gen
+### Go template
 # Binaries for programs and plugins
 *.exe
 *.exe~
 *.dll
 *.so
 *.dylib
-
+*.tar.gz
+*.DS_Store
+.DS_Store
 # Test binary, built with `go test -c`
 *.test
 
@@ -13,3 +25,8 @@
 
 # Dependency directories (remove the comment below to include it)
 # vendor/
+/exe
+/bin
+/release
+/bbin
+/script
