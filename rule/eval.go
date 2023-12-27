@@ -1,6 +1,9 @@
 package rule
 
-import "fmt"
+import (
+	"fmt"
+	"github.com/chainreactors/logs"
+)
 
 func Eval(node Node, word string) []string {
 	switch n := node.(type) {
@@ -11,15 +14,24 @@ func Eval(node Node, word string) []string {
 }
 
 func evalProgram(program *Program, word string) []string {
-	ss := make([]string, len(program.Expressions))
-	for i, expr := range program.Expressions {
-		ss[i], _ = evalRuleExpression(expr.(*RuleExpression), word)
+	var ss []string
+	for _, expr := range program.Expressions {
+		if s, err := evalRuleExpression(expr.(*RuleExpression), word); err == nil && s != "" {
+			ss = append(ss, s)
+		} else {
+			logs.Log.Debugf("v%", err)
+		}
 	}
 	return ss
 }
 
 func evalRuleExpression(r *RuleExpression, word string) (string, error) {
 	var err error
+	defer func() {
+		if err := recover(); err != nil {
+			err = fmt.Errorf("run error: %v", err)
+		}
+	}()
 	for _, f := range r.Functions {
 		if f.FunctionToken.Type == TOKEN_FILTER {
 			if ok, err := evalFilterExpression(&f, word); err == nil && ok {
@@ -34,7 +46,7 @@ func evalRuleExpression(r *RuleExpression, word string) (string, error) {
 			}
 		}
 	}
-	return word, nil
+	return word, err
 }
 
 func evalRuleExpressionSkipError(r *RuleExpression, word string) string {
@@ -57,11 +69,6 @@ func evalFilterExpression(f *FunctionExpression, word string) (bool, error) {
 }
 
 func Run(rules []Expression, word string) (ss []string, evalErr error) {
-	defer func() {
-		if err := recover(); err != nil {
-			evalErr = fmt.Errorf("run error: %v", err)
-		}
-	}()
 	ss = make([]string, len(rules))
 	var err error
 	for i, rule := range rules {
@@ -92,16 +99,11 @@ func RunAsStream(rules []Expression, word string) chan string {
 	return ch
 }
 
-func RunWithString(rules, word string) (ss []string, evalErr error) {
-	defer func() {
-		if err := recover(); err != nil {
-			evalErr = fmt.Errorf("run error: %v", err)
-		}
-	}()
+func EvalWithString(rules, word string) (ss []string) {
 	l := NewLexer(rules)
 	p := NewParser(l)
 	programs := p.ParseProgram(nil)
-	return evalProgram(programs, word), evalErr
+	return evalProgram(programs, word)
 }
 
 func Compile(rules string, filter string) *Program {

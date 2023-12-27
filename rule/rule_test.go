@@ -2,6 +2,7 @@ package rule
 
 import (
 	"fmt"
+	"io/ioutil"
 	"testing"
 )
 
@@ -34,11 +35,8 @@ func TestEval(t *testing.T) {
 
 func TestRun(t *testing.T) {
 	word := "admin"
-	input := rules
-	ss, err := RunWithString(input, word)
-	if err != nil {
-		fmt.Println(err.Error())
-	}
+	input, _ := ioutil.ReadFile("rockyou-30000.rule")
+	ss := EvalWithString(string(input), word)
 	for i, s := range ss {
 		fmt.Printf("%d : %s\n", i, s)
 	}
@@ -73,9 +71,9 @@ func TestLine(t *testing.T) {
 }
 
 func TestParser(t *testing.T) {
-	input := rules
+	input, _ := ioutil.ReadFile("rockyou-30000.rule")
 	//fmt.Printf("Input = %s\n", input)
-	l := NewLexer(input)
+	l := NewLexer(string(input))
 	p := NewParser(l)
 	programs := p.ParseProgram(nil)
 	for _, expr := range programs.Expressions {
