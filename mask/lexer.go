@@ -12,8 +12,8 @@ type Lexer struct {
 	readPosition int  //reading offset
 	tokenCache   []Token
 	curCache     int
-	line         int
-	col          int
+	//line         int
+	col int
 }
 
 func NewLexer(input string) *Lexer {
@@ -21,8 +21,6 @@ func NewLexer(input string) *Lexer {
 	l.ch = ' '
 	l.position = 0
 	l.readPosition = 0
-
-	l.line = 1
 	l.col = 0
 
 	l.readNext()
@@ -39,12 +37,7 @@ func (l *Lexer) readNext() {
 		l.ch = 0
 	} else {
 		l.ch = l.input[l.readPosition]
-		if l.ch == '\n' {
-			l.col = 0
-			l.line++
-		} else {
-			l.col += 1
-		}
+		l.col += 1
 	}
 
 	l.position = l.readPosition
@@ -86,16 +79,11 @@ func (l *Lexer) ReadTokens() []Token {
 		toks = append(toks, tok)
 	default:
 		var tok Token
-		if isLetter(l.ch) {
-			tok.Literal = l.readIdentifier(false)
-			tok.Pos = pos
-			tok.Type = TOKEN_IDENTIFIER
-			toks = append(toks, tok)
-			return toks
-		} else {
-			tok = newToken(TOKEN_ILLEGAL, l.ch, pos)
-			toks = append(toks, tok)
-		}
+		tok.Literal = l.readIdentifier(false)
+		tok.Pos = pos
+		tok.Type = TOKEN_IDENTIFIER
+		toks = append(toks, tok)
+		return toks
 	}
 
 	l.readNext()
@@ -118,7 +106,6 @@ func (l *Lexer) readNumber() string {
 }
 
 func (l *Lexer) readMask() []Token {
-
 	startPos := l.getPos()
 	lparenTok := newToken(TOKEN_LPAREN, l.ch, l.getPos())
 	//toks = append(toks, newToken(TOKEN_LPAREN, l.ch, l.getPos()))
@@ -135,14 +122,15 @@ func (l *Lexer) readMask() []Token {
 					TOKEN_NUMBER,
 					l.readIdentifier(true),
 				})
+			} else if isSplit(l.ch) {
+				toks = append(toks, newToken(TOKEN_SPLIT, l.ch, l.getPos()))
+				l.readNext()
 			} else if isLetter(l.ch) {
 				toks = append(toks, Token{
 					l.getPos(),
 					TOKEN_IDENTIFIER,
 					l.readIdentifier(true),
 				})
-			} else if isSplit(l.ch) {
-				l.readNext()
 			}
 		}
 
@@ -171,11 +159,11 @@ func (l *Lexer) readMask() []Token {
 func (l *Lexer) readIdentifier(safe bool) string {
 	position := l.position
 	if safe {
-		for (isLetter(l.ch) || isDigit(l.ch)) && !(l.ch == '#' || l.ch == '}') {
+		for (isLetter(l.ch) || isDigit(l.ch)) && !(l.ch == '#' || l.ch == '}') && !isSplit(l.ch) {
 			l.readNext()
 		}
 	} else {
-		for isLetter(l.ch) || isDigit(l.ch) {
+		for (isLetter(l.ch) || isDigit(l.ch)) && l.ch != '{' {
 			l.readNext()
 		}
 	}
@@ -191,8 +179,8 @@ func (l *Lexer) skipWhitespace() {
 func (l *Lexer) getPos() Position {
 	return Position{
 		Offset: l.position,
-		Line:   l.line,
-		Col:    l.col,
+		//Line:   l.line,
+		Col: l.col,
 	}
 }
 
@@ -219,5 +207,5 @@ func isStart(ch rune) bool {
 }
 
 func isLetter(ch rune) bool {
-	return ch != '{' && ch != 0 && !isDigit(ch) && !isStart(ch) && !isSplit(ch) && ch != '}'
+	return ch != 0
 }

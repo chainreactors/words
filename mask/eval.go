@@ -69,5 +69,5 @@ func RunToStream(code string, params [][]string, keywords map[string][]string) (
 		return nil, fmt.Errorf("compile error")
 	}
 
-	return Eval(program).(*GENERATOR).Steamer, nil
+	return Eval(program).(*GENERATOR).Streamer, nil
 }

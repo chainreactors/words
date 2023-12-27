@@ -38,7 +38,7 @@ func (tt TokenType) String() string {
 	case TOKEN_RPAREN:
 		return "}"
 	case TOKEN_SPLIT:
-		return "|"
+		return "SPLIT"
 	case TOKEN_NUMBER:
 		return "NUMBER"
 	case TOKEN_IDENTIFIER:

@@ -8,15 +8,21 @@ import (
 )
 
 func TestLexer(t *testing.T) {
-	input := "test{@aaa|bbb#3}"
-	fmt.Printf("Input = %s\n", input)
-
-	l := NewLexer(input)
-	for {
-		tok := l.NextToken()
-		fmt.Printf("Type: %s, Literal = %s\n", tok.Type, tok.Literal)
-		if tok.Type == TOKEN_EOF {
-			break
+	inputs := []string{
+		"test-{@aaa|bbb#3}",
+		"test-{@aaa|bbb#3}+{@ccc|ddd#3}",
+		"test{{1iohoi",
+		"test{aaa}",
+	}
+	for _, input := range inputs {
+		fmt.Printf("Input = %s\n", input)
+		l := NewLexer(input)
+		for {
+			tok := l.NextToken()
+			fmt.Printf("Type: %s, Literal = %s\n", tok.Type, tok.Literal)
+			if tok.Type == TOKEN_EOF {
+				break
+			}
 		}
 	}
 }
@@ -99,7 +105,7 @@ func TestRun(t *testing.T) {
 }
 
 func TestProduct(t *testing.T) {
-	words := Product(wrapSteam([]string{"a", "b", "c", "d"}), []string{"a", "b", "c", "d"})
+	words := Product(wrapStream([]string{"a", "b", "c", "d"}), []string{"a", "b", "c", "d"})
 	for w := range words {
 		fmt.Println(w)
 	}
@@ -108,19 +114,19 @@ func TestProduct(t *testing.T) {
 func TestGenerator(t *testing.T) {
 	start := time.Now()
 	gen := NewGenerator(ParseCharacterSetWithIdent("l"), 5, false)
-	for s := range gen.Steamer {
+	for s := range gen.Streamer {
 		s = s
 		continue
 	}
 	println(time.Since(start).String())
-	//for s := range gen.Steamer {
+	//for s := range gen.Streamer {
 	//	fmt.Println(s)
 	//}
 }
 
 func TestNewGeneratorSingle(t *testing.T) {
 	gen := NewGeneratorSingle("a")
-	for s := range gen.Steamer {
+	for s := range gen.Streamer {
 		fmt.Println(s)
 	}
 }
@@ -130,7 +136,7 @@ func TestCross(t *testing.T) {
 	//gen2 := NewGenerator([]string{"eee", "fff"}, 2, true)
 	gen3 := NewGeneratorSingle("z")
 	gen1.Cross(gen3)
-	for w := range gen1.Steamer {
+	for w := range gen1.Streamer {
 		fmt.Println(w)
 	}
 }
