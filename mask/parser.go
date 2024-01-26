@@ -66,7 +66,8 @@ func ParseCharacterSetWithNumber(s string, custom [][]string) []string {
 	var cs []string
 	for i := 0; i < len(s); i++ {
 		if len(custom) >= i+1 {
-			cs = append(cs, custom[i]...)
+			index, _ := strconv.Atoi(s[i : i+1])
+			cs = append(cs, custom[index]...)
 		} else {
 			fmt.Printf("index %d out of dicts, not enough dict\n", i)
 		}
