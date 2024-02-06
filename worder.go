@@ -85,7 +85,7 @@ type Worder struct {
 	token   int
 	Rules   []rule.Expression
 	scanner *bufio.Scanner
-	Fns     []func(string) string
+	Fns     []func(string) []string
 	Closed  bool
 }
 
@@ -104,8 +104,9 @@ func (word *Worder) Run() {
 				for r := range rule.RunAsStream(word.Rules, w) {
 					if word.Fns != nil {
 						for _, fn := range word.Fns {
-							r = fn(r)
-							word.C <- r
+							for _, i := range fn(r) {
+								word.C <- i
+							}
 						}
 					} else {
 						word.C <- r
@@ -114,8 +115,9 @@ func (word *Worder) Run() {
 			} else {
 				if word.Fns != nil {
 					for _, fn := range word.Fns {
-						w = fn(w)
-						word.C <- w
+						for _, i := range fn(w) {
+							word.C <- i
+						}
 					}
 				} else {
 					word.C <- w
