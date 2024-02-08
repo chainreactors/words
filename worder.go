@@ -93,6 +93,28 @@ func (word *Worder) SetRules(rules string, filter string) {
 	word.Rules = rule.Compile(rules, filter).Expressions
 }
 
+func (word *Worder) EvalFunctions(w string) []string {
+	var ss []string
+	for _, f := range word.Fns {
+		if ss != nil {
+			for i, s := range ss {
+				newss := f(s)
+				if len(newss) == 1 {
+					ss[i] = newss[0]
+				} else if len(newss) > 1 {
+					ss = append(ss[:i], newss...)
+					ss = append(ss, ss[i+1:]...)
+				} else {
+					ss = append(ss[:i], ss[i+1:]...)
+				}
+			}
+		} else {
+			ss = f(w)
+		}
+	}
+	return ss
+}
+
 func (word *Worder) Run() {
 	go func() {
 		for w := range word.ch {
@@ -103,10 +125,8 @@ func (word *Worder) Run() {
 			if word.Rules != nil {
 				for r := range rule.RunAsStream(word.Rules, w) {
 					if word.Fns != nil {
-						for _, fn := range word.Fns {
-							for _, i := range fn(r) {
-								word.C <- i
-							}
+						for _, i := range word.EvalFunctions(w) {
+							word.C <- i
 						}
 					} else {
 						word.C <- r
@@ -114,10 +134,8 @@ func (word *Worder) Run() {
 				}
 			} else {
 				if word.Fns != nil {
-					for _, fn := range word.Fns {
-						for _, i := range fn(w) {
-							word.C <- i
-						}
+					for _, i := range word.EvalFunctions(w) {
+						word.C <- i
 					}
 				} else {
 					word.C <- w
