@@ -125,8 +125,12 @@ func (word *Worder) Run() {
 			if word.Rules != nil {
 				for r := range rule.RunAsStream(word.Rules, w) {
 					if word.Fns != nil {
-						for _, i := range word.EvalFunctions(w) {
-							word.C <- i
+						if ws := word.EvalFunctions(w); ws != nil {
+							for _, i := range word.EvalFunctions(w) {
+								word.C <- i
+							}
+						} else {
+							word.C <- "" // 表示skip
 						}
 					} else {
 						word.C <- r
@@ -134,8 +138,12 @@ func (word *Worder) Run() {
 				}
 			} else {
 				if word.Fns != nil {
-					for _, i := range word.EvalFunctions(w) {
-						word.C <- i
+					if ws := word.EvalFunctions(w); ws != nil {
+						for _, i := range word.EvalFunctions(w) {
+							word.C <- i
+						}
+					} else {
+						word.C <- "" // 表示skip
 					}
 				} else {
 					word.C <- w
