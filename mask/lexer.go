@@ -116,7 +116,15 @@ func (l *Lexer) readMask() []Token {
 		toks = append(toks, newToken(TOKEN_START, l.ch, l.getPos()))
 		l.readNext()
 		for l.ch != '#' && l.ch != '}' {
-			if isDigit(l.ch) {
+			if l.ch == '\\' {
+				l.readNext()
+				toks = append(toks, Token{
+					Pos:     l.getPos(),
+					Type:    TOKEN_ESCAPE,
+					Literal: string(l.ch),
+				})
+				l.readNext()
+			} else if isDigit(l.ch) {
 				toks = append(toks, Token{
 					l.getPos(),
 					TOKEN_NUMBER,
@@ -200,7 +208,7 @@ func isSplit(ch rune) bool {
 }
 
 func isStart(ch rune) bool {
-	if ch == '?' || ch == '@' || ch == '$' {
+	if ch == '?' || ch == '$' {
 		return true
 	}
 	return false

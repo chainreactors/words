@@ -146,15 +146,17 @@ func (p *Parser) parseExpression() Expression {
 func (p *Parser) parseMaskExpression() Expression {
 	expression := &MaskExpression{Start: p.peekToken}
 	p.nextToken()
-	for p.peekToken.Type != TOKEN_REPEAT && p.peekToken.Type != TOKEN_RPAREN {
-		if p.peekToken.Type == TOKEN_IDENTIFIER {
-			if expression.Start.Literal == "@" {
-				expression.CharacterSet = append(expression.CharacterSet, ParseCharacterSetWithSpecial(p.peekToken.Literal, p.keywords)...)
+	for peek := p.peekToken; peek.Type != TOKEN_REPEAT && peek.Type != TOKEN_RPAREN; peek = p.peekToken {
+		if peek.Type == TOKEN_IDENTIFIER {
+			if peek.Literal[0] == '@' {
+				expression.CharacterSet = append(expression.CharacterSet, ParseCharacterSetWithSpecial(peek.Literal[1:], p.keywords)...)
 			} else {
-				expression.CharacterSet = ParseCharacterSetWithIdent(p.peekToken.Literal)
+				expression.CharacterSet = append(expression.CharacterSet, ParseCharacterSetWithIdent(peek.Literal)...)
 			}
-		} else if p.peekToken.Type == TOKEN_NUMBER {
-			expression.CharacterSet = ParseCharacterSetWithNumber(p.peekToken.Literal, p.params)
+		} else if peek.Type == TOKEN_NUMBER {
+			expression.CharacterSet = append(expression.CharacterSet, ParseCharacterSetWithNumber(peek.Literal, p.params)...)
+		} else if peek.Type == TOKEN_ESCAPE {
+			expression.CharacterSet = append(expression.CharacterSet, peek.Literal)
 		}
 		p.nextToken()
 	}
@@ -168,7 +170,6 @@ func (p *Parser) parseMaskExpression() Expression {
 		}
 		p.nextToken()
 	} else {
-
 		expression.Repeat = 1
 	}
 
@@ -243,7 +244,7 @@ func (p *Parser) ErrorLines() []string {
 	return p.errorLines
 }
 
-//DEBUG ONLY
+// DEBUG ONLY
 func (p *Parser) debugToken(message string) {
 	fmt.Printf("%s, curToken = %s, curToken.Pos = %d, peekToken = %s, peekToken.Pos=%d\n", message, p.curToken.Literal, p.curToken.Pos.Line, p.peekToken.Literal, p.peekToken.Pos.Line)
 }

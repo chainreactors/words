@@ -13,6 +13,7 @@ func TestLexer(t *testing.T) {
 		"test-{@aaa|bbb#3}+{@ccc|ddd#3}",
 		"test{{1iohoi",
 		"test{aaa}",
+		"test{?l|\\l}",
 	}
 	for _, input := range inputs {
 		fmt.Printf("Input = %s\n", input)
@@ -24,6 +25,8 @@ func TestLexer(t *testing.T) {
 				break
 			}
 		}
+		fmt.Println("-----------------")
+
 	}
 }
 
@@ -31,7 +34,7 @@ func TestParser(t *testing.T) {
 	dicts := [][]string{
 		[]string{"aaa", "bbb", "ccc"},
 	}
-	input := "test{@month}"
+	input := "test{?l|\\l}"
 	expected := "test{?a,b,c,d,e,f,g,h,i,j,k,l,m,n,o,p,q,r,s,t,u,v,w,x,y,z,A,B,C,D,E,F,G,H,I,J,K,L,M,N,O,P,Q,R,S,T,U,V,W,X,Y,Z#3}"
 	l := NewLexer(input)
 	p := NewParser(l, dicts, nil)
@@ -58,22 +61,20 @@ func TestEval(t *testing.T) {
 		expected string
 	}{
 		//{"test{?lu#3}", "test{?abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ#3}"},
-		{"test{?123}", ""},
-		//{"1 + 2", "3"},
-		//{"2 + (3 * 4) / ( 6 - 3 ) + 10", "16"},
-		//{"2 + 3 * 4 / 6 - 3  + 10", "11"},
-		//{"(5 + 2) * (4 - 2) + 6", "20"},
-		//{"5 + 2 * 4 - 2 + 6", "17"},
-		//{"5 + 2.1 * 4 - 2 + 6.2", "17.6"},
-		//{"2 + 2 ** 2 ** 3", "258"},
-		//{"10", "10"},
+		//{"test{?01}@{?2}", ""},
+		{"test{?u|@year#2}", ""},
 	}
 	dicts := [][]string{
 		[]string{"aaa", "bbb", "ccc"},
+		[]string{"222", "111"},
+		[]string{"ddd", "eee"},
+	}
+	keywords := map[string][]string{
+		"year": []string{"2024"},
 	}
 	for _, tt := range tests {
 		l := NewLexer(tt.input)
-		p := NewParser(l, dicts, nil)
+		p := NewParser(l, dicts, keywords)
 		program := p.ParseProgram()
 		if len(p.Errors()) != 0 {
 			for _, err := range p.Errors() {
@@ -82,12 +83,10 @@ func TestEval(t *testing.T) {
 			break
 		}
 
-		evaluated := Eval(program)
+		evaluated := Eval(program).(*GENERATOR)
 		if evaluated != nil {
-			if evaluated.Inspect() != tt.expected {
-				fmt.Printf("%s\n", evaluated.Inspect())
-			} else {
-				fmt.Printf("%s = %s\n", tt.input, tt.expected)
+			for _, w := range evaluated.All() {
+				fmt.Println(w)
 			}
 		}
 	}

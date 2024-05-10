@@ -11,17 +11,17 @@ const (
 	TOKEN_ILLEGAL TokenType = (iota - 1) // Illegal token
 	TOKEN_EOF                            //End Of File
 
-	TOKEN_START  // ?
-	TOKEN_REPEAT // #
-	TOKEN_SPLIT  // ,
-	TOKEN_LPAREN // {
-	TOKEN_RPAREN // }
-
+	TOKEN_START      // ?
+	TOKEN_REPEAT     // #
+	TOKEN_SPLIT      // ,
+	TOKEN_LPAREN     // {
+	TOKEN_RPAREN     // }
+	TOKEN_ESCAPE     // \
 	TOKEN_NUMBER     //10 or 10.1
 	TOKEN_IDENTIFIER //identifier
 )
 
-//for debug & testing
+// for debug & testing
 func (tt TokenType) String() string {
 	switch tt {
 	case TOKEN_ILLEGAL:
@@ -32,7 +32,8 @@ func (tt TokenType) String() string {
 		return "START"
 	case TOKEN_REPEAT:
 		return "#"
-
+	case TOKEN_ESCAPE:
+		return "ESCAPE"
 	case TOKEN_LPAREN:
 		return "{"
 	case TOKEN_RPAREN:
@@ -48,7 +49,7 @@ func (tt TokenType) String() string {
 	}
 }
 
-var keywords = map[string]TokenType{}
+//var keywords = map[string]TokenType{}
 
 type Token struct {
 	Pos     Position
@@ -56,12 +57,12 @@ type Token struct {
 	Literal string
 }
 
-//Stringer method for Token
+// Stringer method for Token
 func (t Token) String() string {
 	return fmt.Sprintf("Position: %s, Type: %s, Literal: %s", t.Pos, t.Type, t.Literal)
 }
 
-//Position is the location of a code point in the source
+// Position is the location of a code point in the source
 type Position struct {
 	Filename string
 	Offset   int //offset relative to entire file
@@ -69,7 +70,7 @@ type Position struct {
 	Col      int //offset relative to each line
 }
 
-//Stringer method for Position
+// Stringer method for Position
 func (p Position) String() string {
 	var msg string
 	if p.Filename == "" {
@@ -81,7 +82,7 @@ func (p Position) String() string {
 	return msg
 }
 
-//We could not use `Line()` as function name, because `Line` is the struct's field
+// We could not use `Line()` as function name, because `Line` is the struct's field
 func (p Position) Sline() string { //String line
 	var msg string
 	if p.Filename == "" {
