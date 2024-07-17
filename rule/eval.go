@@ -2,24 +2,23 @@ package rule
 
 import (
 	"fmt"
-	"github.com/chainreactors/logs"
 )
 
 func Eval(node Node, word string) []string {
 	switch n := node.(type) {
 	case *Program:
-		return evalProgram(n, word)
+		return mustEvalProgram(n, word)
 	}
 	return nil
 }
 
-func evalProgram(program *Program, word string) []string {
+func mustEvalProgram(program *Program, word string) []string {
 	var ss []string
 	for _, expr := range program.Expressions {
 		if s, err := evalRuleExpression(expr.(*RuleExpression), word); err == nil && s != "" {
 			ss = append(ss, s)
 		} else {
-			logs.Log.Debugf("v%", err)
+			panic(err)
 		}
 	}
 	return ss
@@ -103,7 +102,7 @@ func EvalWithString(rules, word string) (ss []string) {
 	l := NewLexer(rules)
 	p := NewParser(l)
 	programs := p.ParseProgram(nil)
-	return evalProgram(programs, word)
+	return mustEvalProgram(programs, word)
 }
 
 func Compile(rules string, filter string) *Program {
