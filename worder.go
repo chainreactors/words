@@ -2,7 +2,6 @@ package words
 
 import (
 	"bufio"
-	"errors"
 	"github.com/chainreactors/words/mask"
 	"github.com/chainreactors/words/rule"
 	"os"
@@ -12,16 +11,10 @@ import (
 type WordFunc func(string) []string
 
 var CustomWords [][]string
-var (
-	ErrNilInputChannel = errors.New("input channel is nil")
-)
 
-func NewWorder(word *Worder) (*Worder, error) {
-	if word.Input == nil {
-		return nil, ErrNilInputChannel
-	}
+func NewWorder(word *Worder) *Worder {
 	word.Output = make(chan string)
-	return word, nil
+	return word
 }
 
 func NewWorderWithList(list []string) *Worder {
@@ -96,7 +89,6 @@ type Worder struct {
 	Output chan string
 	Rules  []rule.Expression
 	Fns    []WordFunc
-	Closed bool
 	token  int
 	count  int
 }
