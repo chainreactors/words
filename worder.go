@@ -8,6 +8,8 @@ import (
 	"strings"
 )
 
+type WordFunc func(string) []string
+
 var CustomWords [][]string
 
 func NewWorder(list []string) *Worder {
@@ -85,12 +87,16 @@ type Worder struct {
 	token   int
 	Rules   []rule.Expression
 	scanner *bufio.Scanner
-	Fns     []func(string) []string
+	Fns     []WordFunc
 	Closed  bool
 }
 
 func (word *Worder) SetRules(rules string, filter string) {
 	word.Rules = rule.Compile(rules, filter).Expressions
+}
+
+func (word *Worder) AddFunction(f WordFunc) {
+	word.Fns = append(word.Fns, f)
 }
 
 func (word *Worder) EvalFunctions(w string) []string {
