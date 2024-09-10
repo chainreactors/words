@@ -2,6 +2,7 @@ package words
 
 import (
 	"bufio"
+	"errors"
 	"github.com/chainreactors/words/mask"
 	"github.com/chainreactors/words/rule"
 	"os"
@@ -11,42 +12,50 @@ import (
 type WordFunc func(string) []string
 
 var CustomWords [][]string
+var (
+	ErrNilInputChannel = errors.New("input channel is nil")
+)
 
-func NewWorder(list []string) *Worder {
+func NewWorder(word *Worder) (*Worder, error) {
+	if word.Input == nil {
+		return nil, ErrNilInputChannel
+	}
+	word.Output = make(chan string)
+	return word, nil
+}
+
+func NewWorderWithList(list []string) *Worder {
 	worder := &Worder{
-		token: 0,
-		ch:    make(chan string),
-		C:     make(chan string),
+		Input:  make(chan string),
+		Output: make(chan string),
 	}
 	go func() {
 		for _, l := range list {
-			worder.ch <- l
+			worder.Input <- l
 		}
-		close(worder.ch)
+		close(worder.Input)
 	}()
 	return worder
 }
 
 func NewWorderWithChan(ch chan string) *Worder {
 	worder := &Worder{
-		token: 0,
-		ch:    make(chan string),
-		C:     make(chan string),
+		Input:  make(chan string),
+		Output: make(chan string),
 	}
 	go func() {
 		for w := range ch {
-			worder.ch <- w
+			worder.Input <- w
 		}
-		close(worder.ch)
+		close(worder.Input)
 	}()
 	return worder
 }
 
 func NewWorderWithDsl(word string, params [][]string, keywords map[string][]string) (*Worder, error) {
 	worder := &Worder{
-		token: 0,
-		ch:    make(chan string),
-		C:     make(chan string),
+		Input:  make(chan string),
+		Output: make(chan string),
 	}
 
 	var err error
@@ -60,35 +69,36 @@ func NewWorderWithDsl(word string, params [][]string, keywords map[string][]stri
 		return nil, err
 	}
 
-	worder.ch = input
+	worder.Input = input
 	return worder, nil
 }
 
 func NewWorderWithFile(file *os.File) *Worder {
 	worder := &Worder{
-		token:   0,
-		scanner: bufio.NewScanner(file),
-		ch:      make(chan string),
-		C:       make(chan string),
+		Input:  make(chan string),
+		Output: make(chan string),
 	}
+
+	scanner := bufio.NewScanner(file)
+
 	go func() {
-		for worder.scanner.Scan() {
-			worder.ch <- strings.TrimSpace(worder.scanner.Text())
+		for scanner.Scan() {
+			worder.Input <- strings.TrimSpace(scanner.Text())
 		}
-		close(worder.ch)
+		close(worder.Input)
 	}()
 
 	return worder
 }
 
 type Worder struct {
-	ch      chan string
-	C       chan string
-	token   int
-	Rules   []rule.Expression
-	scanner *bufio.Scanner
-	Fns     []WordFunc
-	Closed  bool
+	Input  chan string
+	Output chan string
+	Rules  []rule.Expression
+	Fns    []WordFunc
+	Closed bool
+	token  int
+	count  int
 }
 
 func (word *Worder) SetRules(rules string, filter string) {
@@ -123,8 +133,8 @@ func (word *Worder) EvalFunctions(w string) []string {
 
 func (word *Worder) Run() {
 	go func() {
-		for w := range word.ch {
-			word.token++
+		for w := range word.Input {
+			word.count++
 			if w == "" {
 				continue
 			}
@@ -133,38 +143,45 @@ func (word *Worder) Run() {
 					if word.Fns != nil {
 						if ws := word.EvalFunctions(w); ws != nil {
 							for _, i := range word.EvalFunctions(w) {
-								word.C <- i
+								word.count++
+								word.Output <- i
 							}
 						} else {
-							word.C <- "" // 表示skip
+							word.Output <- "" // 表示skip
 						}
 					} else {
-						word.C <- r
+						word.count++
+						word.Output <- r
 					}
 				}
 			} else {
 				if word.Fns != nil {
 					if ws := word.EvalFunctions(w); ws != nil {
 						for _, i := range word.EvalFunctions(w) {
-							word.C <- i
+							word.count++
+							word.Output <- i
 						}
 					} else {
-						word.C <- "" // 表示skip
+						word.Output <- "" // 表示skip
 					}
 				} else {
-					word.C <- w
+					word.count++
+					word.Output <- w
 				}
 			}
 		}
-		close(word.C)
-		word.Closed = true
+		close(word.Output)
 	}()
 }
 
 func (word *Worder) All() []string {
 	var ws []string
-	for w := range word.C {
+	for w := range word.Output {
 		ws = append(ws, w)
 	}
 	return ws
+}
+
+func (word *Worder) Count() int {
+	return word.count
 }

@@ -18,7 +18,7 @@ func TestNewWorder(t *testing.T) {
 	})
 
 	worder.Run()
-	for w := range worder.C {
+	for w := range worder.Output {
 		fmt.Println(w)
 	}
 }
