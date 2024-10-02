@@ -1,9 +1,14 @@
 package logic
 
-func Run(logic string) {
-	//l := NewLexer(logic)
-	//p := NewParser(l)
+func Compile(code string) *Program {
+	l := NewLexer(code)
+	p := NewParser(l)
+	return p.ParseProgram()
+}
 
+func Run(code string, env map[string]bool) bool {
+	program := Compile(code)
+	return EvalLogic(program, env)
 }
 
 func EvalLogic(node Node, env map[string]bool) bool {
