@@ -1,35 +1,41 @@
 package logic
 
-func EvalLogic(node Node) bool {
-	return IsTrue(Eval(node))
+func Run(logic string) {
+	//l := NewLexer(logic)
+	//p := NewParser(l)
+
 }
 
-func Eval(node Node) (val Object) {
+func EvalLogic(node Node, env map[string]bool) bool {
+	return IsTrue(Eval(node, env))
+}
+
+func Eval(node Node, env map[string]bool) (val Object) {
 	switch node := node.(type) {
 	case *Program:
-		return evalProgram(node)
-	//case *NumberLiteral:
-	//	return evalNumber(node)
+		return evalProgram(node, env)
 	case *PrefixExpression:
-		right := Eval(node.Right)
+		right := Eval(node.Right, env)
 		return evalPrefixExpression(node, right)
 	case *InfixExpression:
-		left := Eval(node.Left)
+		left := Eval(node.Left, env)
 
-		right := Eval(node.Right)
+		right := Eval(node.Right, env)
 		return evalInfixExpression(node, left, right)
 	case *BooleanLiteral:
 		return nativeBoolToBooleanObject(node.Value)
+	case *Identifier:
+		return nativeBoolToBooleanObject(env[node.Value])
 	}
 
 	return nil
 }
 
-func evalProgram(program *Program) (results Object) {
+func evalProgram(program *Program, env map[string]bool) (results Object) {
 	// for _, expr := range program.Expressions {
 	// 	results = Eval(expr)
 	// }
-	results = Eval(program.Expression)
+	results = Eval(program.Expression, env)
 	return results
 }
 

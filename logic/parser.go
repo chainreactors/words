@@ -74,7 +74,6 @@ func (p *Parser) registerAction() {
 
 func (p *Parser) ParseProgram() *Program {
 	program := &Program{}
-
 	program.Expression = p.parseExpression(LOWEST)
 	return program
 }

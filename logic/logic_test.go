@@ -27,7 +27,7 @@ func TestEval(t *testing.T) {
 		input    string
 		expected bool
 	}{
-		{"true", true},
+		{"a && true", true},
 		{"false", false},
 		{"true && false", false},
 		{"true || false", true},
@@ -65,8 +65,8 @@ func TestEval(t *testing.T) {
 			}
 			break
 		}
-
-		evaluated := EvalLogic(program)
+		env := map[string]bool{"a": false}
+		evaluated := EvalLogic(program, env)
 		fmt.Println(tt.input, "result: ", evaluated)
 	}
 
